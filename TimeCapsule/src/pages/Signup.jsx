@@ -66,7 +66,14 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{
+        backgroundImage:
+          'url("https://img.freepik.com/free-photo/blue-pigment-water_23-2147798188.jpg?ga=GA1.1.397460206.1740223550&semt=ais_hybrid")',
+      }}
+    >
+    <div className="min-h-screen flex items-center justify-center">
       <div className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-8 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Create Your Capsule Account
@@ -178,6 +185,7 @@ const Signup = () => {
           </Link>
         </p>
       </div>
+    </div>
     </div>
   );
 };
