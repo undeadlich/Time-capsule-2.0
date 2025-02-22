@@ -20,7 +20,7 @@ import {
   doc,
   query,
   where,
-  arrayUnion, // ✅ Import this!
+  arrayUnion,
 } from "firebase/firestore";
 
 const FirebaseContext = createContext(null);
@@ -53,7 +53,7 @@ export const FirebaseProvider = (props) => {
     onAuthStateChanged(firebaseAuth, async (user) => {
       if (user) {
         setUser(user);
-        await ensureUserMedia(user.uid); // ✅ Ensure user media exists on login
+        await ensureUserMedia(user.uid);
       } else {
         setUser(null);
       }
@@ -89,7 +89,7 @@ export const FirebaseProvider = (props) => {
   const addUser = async (userId, userData) => {
     try {
       await setDoc(doc(firestore, "users", userId), userData);
-      await ensureUserMedia(userId); // ✅ Ensure user media is created
+      await ensureUserMedia(userId);
     } catch (error) {
       console.error("Error adding user to Firestore:", error);
     }
@@ -112,7 +112,7 @@ export const FirebaseProvider = (props) => {
       if (!response.ok) throw new Error("Failed to upload to Cloudinary");
 
       const data = await response.json();
-      return data.secure_url; // URL of the uploaded file
+      return data.secure_url;
     } catch (error) {
       console.error("Cloudinary upload error:", error);
       return null;
@@ -141,7 +141,7 @@ export const FirebaseProvider = (props) => {
     const userMediaRef = doc(firestore, "userMedia", userId);
 
     try {
-      await ensureUserMedia(userId); // ✅ Ensure userMedia exists before updating it
+      await ensureUserMedia(userId);
 
       await setDoc(
         userMediaRef,
@@ -176,6 +176,7 @@ export const FirebaseProvider = (props) => {
 
     return { capsules: [], albums: [] };
   };
+
   const addContent = async (contentData) => {
     const { type, name, note, files, lockUntil, recipients, albumType } = contentData;
     const collectionName = type === "capsule" ? "capsules" : "albums";
@@ -186,21 +187,8 @@ export const FirebaseProvider = (props) => {
       if (url) fileURLs.push(url);
     }
 
-    const formattedDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-    let finalName = name;
-
-    if (type === "album") {
-      const userMediaRef = doc(firestore, "userMedia", user?.uid);
-      const userMediaSnap = await getDoc(userMediaRef);
-      if (userMediaSnap.exists() && userMediaSnap.data().albums.includes(name)) {
-        toast.error("You already have an album with this name!");
-        return null;
-      }
-      finalName = `${name}_${formattedDate}`;
-    }
-
     const dataToStore = {
-      name: finalName,
+      name,
       note,
       files: fileURLs,
       createdBy: user?.uid,
@@ -219,23 +207,7 @@ export const FirebaseProvider = (props) => {
     try {
       const docRef = await addDoc(collection(firestore, collectionName), dataToStore);
       const contentId = docRef.id;
-
       await updateUserMedia(user?.uid, contentId, type);
-
-      if (type === "capsule" && dataToStore.recipients.length > 0) {
-        for (const email of dataToStore.recipients) {
-          const userQuery = query(collection(firestore, "users"), where("email", "==", email));
-          const querySnapshot = await getDocs(userQuery);
-
-          if (!querySnapshot.empty) {
-            querySnapshot.forEach(async (docSnap) => {
-              const recipientId = docSnap.id;
-              await updateUserMedia(recipientId, contentId, "capsule");
-            });
-          }
-        }
-      }
-
       return contentId;
     } catch (error) {
       console.error(`Error adding ${collectionName} to Firestore:`, error);
@@ -244,20 +216,7 @@ export const FirebaseProvider = (props) => {
   };
 
   return (
-    <FirebaseContext.Provider
-      value={{
-        signinWithGoogle,
-        signupUserWithEmailAndPassword,
-        singinUserWithEmailAndPass,
-        isLoggedIn,
-        user,
-        addUser,
-        logout,
-        addContent,
-        addUserMedia: ensureUserMedia, // ✅ Renamed for clarity
-        getUserMedia,
-      }}
-    >
+    <FirebaseContext.Provider value={{ signinWithGoogle, signupUserWithEmailAndPassword, singinUserWithEmailAndPass, isLoggedIn, user, addUser, logout, addContent, addUserMedia: ensureUserMedia, getUserMedia }}>
       {props.children}
     </FirebaseContext.Provider>
   );
