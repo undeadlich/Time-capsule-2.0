@@ -1,14 +1,19 @@
 
-import LoginPage from './pages/Login.jsx'
-import SignupPage from './pages/Signup.jsx'
+import { Route, Router, Routes } from 'react-router-dom'
+import Login from './pages/Login.jsx'
+import Signup from './pages/Signup.jsx'
 
 function App() {
 
 
   return (
     <>
-    <LoginPage />
-    <SignupPage />
+    
+      <Routes>
+        <Route path='/login' element={<Login />} />
+        <Route path='/signup' element={<Signup />} />
+      </Routes>
+    
     </>
   )
 }
