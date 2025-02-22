@@ -20,6 +20,7 @@ import {
   doc,
   query,
   where,
+  arrayUnion, // ✅ Import this!
 } from "firebase/firestore";
 
 const FirebaseContext = createContext(null);
@@ -30,7 +31,7 @@ const firebaseConfig = {
   projectId: "timecapsule-5ce63",
   storageBucket: "timecapsule-5ce63.appspot.com",
   messagingSenderId: "1001064662306",
-  appId: "1:1001064662306:web:2af6174250a8ecc280917b"
+  appId: "1:1001064662306:web:2af6174250a8ecc280917b",
 };
 
 export const useFirebase = () => useContext(FirebaseContext);
@@ -49,19 +50,30 @@ export const FirebaseProvider = (props) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    onAuthStateChanged(firebaseAuth, (user) => {
-      if (user) setUser(user);
-      else setUser(null);
+    onAuthStateChanged(firebaseAuth, async (user) => {
+      if (user) {
+        setUser(user);
+        await ensureUserMedia(user.uid); // ✅ Ensure user media exists on login
+      } else {
+        setUser(null);
+      }
     });
   }, []);
 
-  const signupUserWithEmailAndPassword = (email, password) =>
-    createUserWithEmailAndPassword(firebaseAuth, email, password);
+  const signupUserWithEmailAndPassword = async (email, password) => {
+    const userCredential = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+    await addUser(userCredential.user.uid, { email });
+    return userCredential;
+  };
 
   const singinUserWithEmailAndPass = (email, password) =>
     signInWithEmailAndPassword(firebaseAuth, email, password);
 
-  const signinWithGoogle = () => signInWithPopup(firebaseAuth, googleProvider);
+  const signinWithGoogle = async () => {
+    const userCredential = await signInWithPopup(firebaseAuth, googleProvider);
+    await addUser(userCredential.user.uid, { email: userCredential.user.email });
+    return userCredential;
+  };
 
   const isLoggedIn = !!user;
 
@@ -77,6 +89,7 @@ export const FirebaseProvider = (props) => {
   const addUser = async (userId, userData) => {
     try {
       await setDoc(doc(firestore, "users", userId), userData);
+      await ensureUserMedia(userId); // ✅ Ensure user media is created
     } catch (error) {
       console.error("Error adding user to Firestore:", error);
     }
@@ -88,10 +101,13 @@ export const FirebaseProvider = (props) => {
     formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
 
     try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) throw new Error("Failed to upload to Cloudinary");
 
@@ -103,99 +119,129 @@ export const FirebaseProvider = (props) => {
     }
   };
 
+  const ensureUserMedia = async (userId) => {
+    try {
+      const userMediaRef = doc(firestore, "userMedia", userId);
+      const userMediaSnap = await getDoc(userMediaRef);
+      if (!userMediaSnap.exists()) {
+        await setDoc(userMediaRef, { capsules: [], albums: [] });
+        console.log("User media created successfully.");
+      }
+    } catch (error) {
+      console.error("Error ensuring user media:", error);
+    }
+  };
+
+  const updateUserMedia = async (userId, contentId, type) => {
+    if (!userId) {
+      console.error("No user ID provided.");
+      return;
+    }
+
+    const userMediaRef = doc(firestore, "userMedia", userId);
+
+    try {
+      await ensureUserMedia(userId); // ✅ Ensure userMedia exists before updating it
+
+      await setDoc(
+        userMediaRef,
+        {
+          [type === "capsule" ? "capsules" : "albums"]: arrayUnion(contentId),
+        },
+        { merge: true }
+      );
+
+      console.log(`Added ${contentId} to userMedia.`);
+    } catch (error) {
+      console.error("Error updating userMedia:", error);
+    }
+  };
+
+  const getUserMedia = async (userId) => {
+    if (!userId) {
+      console.error("No user ID provided.");
+      return { capsules: [], albums: [] };
+    }
+
+    const userMediaRef = doc(firestore, "userMedia", userId);
+
+    try {
+      const userMediaSnap = await getDoc(userMediaRef);
+      if (userMediaSnap.exists()) {
+        return userMediaSnap.data();
+      }
+    } catch (error) {
+      console.error("Error fetching userMedia:", error);
+    }
+
+    return { capsules: [], albums: [] };
+  };
   const addContent = async (contentData) => {
     const { type, name, note, files, lockUntil, recipients, albumType } = contentData;
     const collectionName = type === "capsule" ? "capsules" : "albums";
-    
-    console.log("Content Type:", type); // Debug: Check content type
-    console.log("Firestore Collection:", collectionName); // Debug: Check collection name
-  
     const fileURLs = [];
-  
+    
     for (const file of files) {
       const url = await uploadToCloudinary(file);
       if (url) fileURLs.push(url);
     }
-  
+
+    const formattedDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    let finalName = name;
+
+    if (type === "album") {
+      const userMediaRef = doc(firestore, "userMedia", user?.uid);
+      const userMediaSnap = await getDoc(userMediaRef);
+      if (userMediaSnap.exists() && userMediaSnap.data().albums.includes(name)) {
+        toast.error("You already have an album with this name!");
+        return null;
+      }
+      finalName = `${name}_${formattedDate}`;
+    }
+
     const dataToStore = {
-      name,
+      name: finalName,
       note,
       files: fileURLs,
       createdBy: user?.uid,
       createdAt: new Date(),
     };
-  
+
     if (type === "capsule") {
       dataToStore.lockUntil = lockUntil;
-      dataToStore.recipients = 
-  typeof recipients === "string"
-    ? recipients.split(",").map((email) => email.trim())
-    : Array.isArray(recipients)
-    ? recipients  // If already an array, use as is
-    : [];
+      dataToStore.recipients = Array.isArray(recipients)
+        ? recipients
+        : recipients?.split(",").map((email) => email.trim()) || [];
     } else if (type === "album") {
       dataToStore.albumType = albumType;
     }
-  
+
     try {
       const docRef = await addDoc(collection(firestore, collectionName), dataToStore);
-      console.log(`Content added successfully to ${collectionName} with ID:`, docRef.id);
-      return docRef.id;
+      const contentId = docRef.id;
+
+      await updateUserMedia(user?.uid, contentId, type);
+
+      if (type === "capsule" && dataToStore.recipients.length > 0) {
+        for (const email of dataToStore.recipients) {
+          const userQuery = query(collection(firestore, "users"), where("email", "==", email));
+          const querySnapshot = await getDocs(userQuery);
+
+          if (!querySnapshot.empty) {
+            querySnapshot.forEach(async (docSnap) => {
+              const recipientId = docSnap.id;
+              await updateUserMedia(recipientId, contentId, "capsule");
+            });
+          }
+        }
+      }
+
+      return contentId;
     } catch (error) {
       console.error(`Error adding ${collectionName} to Firestore:`, error);
       return null;
     }
   };
-
-  const getUserCapsules = async (user) => {
-    if (!user?.uid) {
-      console.error("No user logged in.");
-      return [];
-    }
-  
-    const userId = user.uid;
-    const capsules = [];
-  
-    try {
-      const capsulesQuery = query(collection(firestore, "capsules"), where("createdBy", "==", userId));
-      const capsulesSnapshot = await getDocs(capsulesQuery);
-  
-      capsulesSnapshot.forEach((doc) => {
-        capsules.push({ id: doc.id, ...doc.data() }); // Fetch full document
-      });
-      console.log("Capsules:", capsules); // Debug: Check capsules fetched
-      return capsules;
-    } catch (error) {
-      console.error("Error fetching capsules:", error);
-      return [];
-    }
-  };
-  
-  const getUserAlbums = async (user) => {
-    if (!user?.uid) {
-      console.error("No user logged in.");
-      return [];
-    }
-  
-    const userId = user.uid;
-    const albums = [];
-  
-    try {
-      const albumsQuery = query(collection(firestore, "albums"), where("createdBy", "==", userId));
-      const albumsSnapshot = await getDocs(albumsQuery);
-  
-      albumsSnapshot.forEach((doc) => {
-        albums.push({ id: doc.id, ...doc.data() }); // Fetch full document
-      });
-      console.log("Albums:", albums); // Debug: Check albums fetched
-  
-      return albums;
-    } catch (error) {
-      console.error("Error fetching albums:", error);
-      return [];
-    }
-  };
-  
 
   return (
     <FirebaseContext.Provider
@@ -208,8 +254,8 @@ export const FirebaseProvider = (props) => {
         addUser,
         logout,
         addContent,
-        getUserCapsules, // Added here ✅
-        getUserAlbums, 
+        addUserMedia: ensureUserMedia, // ✅ Renamed for clarity
+        getUserMedia,
       }}
     >
       {props.children}
