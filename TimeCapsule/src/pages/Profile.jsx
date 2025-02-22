@@ -11,7 +11,7 @@ const Profile = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(""); // "capsule" or "album"
 
-  // Function to fetch user media
+  // Fetch user media (capsules and albums)
   const fetchUserMedia = async () => {
     if (user?.uid) {
       try {
@@ -26,7 +26,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserMedia();
-  }, [user]); // Fetch only when user changes
+  }, [user]);
 
   const handleOpenModal = (type) => {
     setModalType(type);
@@ -35,14 +35,14 @@ const Profile = () => {
 
   const handleCloseModal = async () => {
     setModalOpen(false);
-    await fetchUserMedia(); // ✅ Always fetch updated data when modal closes
+    await fetchUserMedia(); // Refresh data after modal closes
   };
 
   const handleSubmitContent = async (data) => {
     try {
       const contentId = await addContent(data);
       if (!contentId) throw new Error("Failed to add content.");
-      await fetchUserMedia(); // ✅ Fetch updated data after adding content
+      await fetchUserMedia();
     } catch (error) {
       console.error("Error adding content:", error);
       alert(error.message);
@@ -52,15 +52,21 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 relative">
+      {/* Blur background content when modal is open */}
       <div className={modalOpen ? "filter blur-sm" : ""}>
+        {/* Header */}
         <header className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-6">
           <div className="container mx-auto flex justify-between items-center">
             <h1 className="text-2xl font-bold text-stone-300">Your Profile</h1>
-            <Link to="/" className="text-stone-300 hover:underline">Home</Link>
+            <Link to="/" className="text-stone-300 hover:underline">
+              Home
+            </Link>
           </div>
         </header>
 
+        {/* Main Content */}
         <main className="container mx-auto p-6">
+          {/* Personal Capsules Section */}
           <section className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-[#036c5f]">Personal Capsules</h2>
@@ -72,7 +78,9 @@ const Profile = () => {
               </button>
             </div>
             {capsules.length === 0 ? (
-              <p className="text-gray-700">You haven't created any capsules yet.</p>
+              <p className="text-gray-700">
+                You haven't created any capsules yet.
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {capsules.map((capsule) => (
@@ -81,13 +89,16 @@ const Profile = () => {
                     className="bg-white p-4 rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:shadow-xl transition-all"
                     onClick={() => navigate(`/${user.uid}/capsule/${capsule}`)}
                   >
-                    <h3 className="text-lg font-semibold text-[#036c5f]">Capsule {capsule}</h3>
+                    <h3 className="text-lg font-semibold text-[#036c5f]">
+                      Capsule {capsule}
+                    </h3>
                   </div>
                 ))}
               </div>
             )}
           </section>
 
+          {/* Albums Section */}
           <section className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-[#036c5f]">Your Albums</h2>
@@ -99,7 +110,9 @@ const Profile = () => {
               </button>
             </div>
             {albums.length === 0 ? (
-              <p className="text-gray-700">You haven't created any albums yet.</p>
+              <p className="text-gray-700">
+                You haven't created any albums yet.
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
                 {albums.map((album) => (
@@ -108,14 +121,29 @@ const Profile = () => {
                     className="bg-white p-4 rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:shadow-xl transition-all"
                     onClick={() => navigate(`/${user.uid}/album/${album}`)}
                   >
-                    <h3 className="text-lg font-semibold text-[#036c5f]">Album {album}</h3>
+                    <h3 className="text-lg font-semibold text-[#036c5f]">
+                      Album {album}
+                    </h3>
                   </div>
                 ))}
               </div>
             )}
           </section>
+
+          {/* Other Features Section */}
+          <section>
+            <h2 className="text-xl font-bold text-[#036c5f] mb-4">
+              Other Features
+            </h2>
+            <div className="bg-stone-300 p-4 rounded shadow">
+              <p className="text-gray-800">
+                Explore additional features like shared capsules, recent activity, and more...
+              </p>
+            </div>
+          </section>
         </main>
 
+        {/* Footer */}
         <footer className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] py-4">
           <div className="container mx-auto text-center text-stone-300">
             &copy; {new Date().getFullYear()} Time Capsule 2.0. All rights reserved.
@@ -123,8 +151,13 @@ const Profile = () => {
         </footer>
       </div>
 
+      {/* Modal Component rendered on top without a dark overlay */}
       {modalOpen && (
-        <AddContentModal type={modalType} onClose={handleCloseModal} onSubmit={handleSubmitContent} />
+        <AddContentModal
+          type={modalType}
+          onClose={handleCloseModal}
+          onSubmit={handleSubmitContent}
+        />
       )}
     </div>
   );
