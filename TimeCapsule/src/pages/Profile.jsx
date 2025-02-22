@@ -126,8 +126,25 @@ const Profile = () => {
               </div>
             )}
           </section>
+          <section>
+            <h2 className="text-xl font-bold text-[#036c5f] mb-4">
+              Other Features
+            </h2>
+            <div className="bg-stone-300 p-4 rounded shadow">
+              <p className="text-gray-800">
+                Explore additional features like shared capsules, recent activity,
+                and more...
+              </p>
+            </div>
+          </section>
         </main>
+        <footer className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] py-4">
+          <div className="container mx-auto text-center text-stone-300">
+            &copy; {new Date().getFullYear()} Time Capsule 2.0. All rights reserved.
+          </div>
+        </footer>
       </div>
+      
 
       {/* Add Content Modal */}
       {modalOpen && (
