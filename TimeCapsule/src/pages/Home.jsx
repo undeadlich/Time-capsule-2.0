@@ -1,9 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useFirebase } from '../context/firebase'; // Adjust the path as needed
 
 const HomePage = () => {
   const { isLoggedIn, logout } = useFirebase(); // Use Firebase context
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleToggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleMenuClick = (callback) => {
+    if (callback) callback();
+    setDropdownOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -11,19 +22,49 @@ const HomePage = () => {
       <header className="bg-gradient-to-r from-[#048c7f] to-[#036c5f]">
         <div className="container mx-auto px-4 py-6 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-stone-300">Time Capsule 2.0</h1>
-          <nav>
+          <nav className="relative">
             {isLoggedIn ? (
-              <>
-                <button 
-                  onClick={logout}
-                  className="text-stone-300 hover:underline mr-4"
+              <div className="inline-block">
+                {/* Dropdown toggle button */}
+                <button
+                  onClick={handleToggleDropdown}
+                  className="flex items-center text-white hover:underline px-3 py-2"
                 >
-                  Logout
+                  <div className="w-8 h-8 bg-white text-[#036c5f] rounded-full flex items-center justify-center mr-2 border border-[#036c5f] shadow">
+                    Y
+                  </div>
+                  <svg
+                    className="w-4 h-4 fill-current text-white"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M5.5 7l4.5 4.5L14.5 7" />
+                  </svg>
                 </button>
-                <Link to="/profile" className="text-stone-300 hover:underline">
-                  Profile
-                </Link>
-              </>
+                {/* Dropdown menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                    <ul className="py-1">
+                      <li>
+                        <Link
+                          to="/profile"
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                          onClick={() => handleMenuClick()}
+                        >
+                          Profile
+                        </Link>
+                      </li>
+                      <li>
+                        <button
+                          onClick={() => handleMenuClick(logout)}
+                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                        >
+                          Logout
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link to="/login" className="text-stone-300 hover:underline mr-4">

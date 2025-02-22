@@ -1,12 +1,10 @@
-/* eslint-disable react/no-unescaped-entities */
-
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFirebase } from "../context/firebase"; // Ensure correct path
 
 const Login = () => {
   const navigate = useNavigate();
-  const { singinUserWithEmailAndPass, signinWithGoogle, isLoggedIn,addUser } =
+  const { singinUserWithEmailAndPass, signinWithGoogle, isLoggedIn, addUser } =
     useFirebase();
 
   const [email, setEmail] = useState("");
@@ -42,7 +40,6 @@ const Login = () => {
         email: user.email,
       });
 
-      //alert("Google Sign-Up successful!");
       navigate("/");
     } catch (error) {
       alert(error.message);
@@ -50,7 +47,13 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div
+      className="min-h-screen flex items-center justify-center bg-cover bg-center"
+      style={{
+        backgroundImage:
+          'url("https://img.freepik.com/free-photo/blue-pigment-water_23-2147798188.jpg?ga=GA1.1.397460206.1740223550&semt=ais_hybrid")',
+      }}
+    >
       <div className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-8 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Welcome Back
@@ -71,7 +74,10 @@ const Login = () => {
             />
           </div>
           <div className="mb-6">
-            <label className="block text-gray-900 mb-1" htmlFor="loginPassword">
+            <label
+              className="block text-gray-900 mb-1"
+              htmlFor="loginPassword"
+            >
               Password
             </label>
             <input
@@ -101,8 +107,8 @@ const Login = () => {
         <div className="mt-4">
           <button
             type="button"
-            className="flex items-center justify-center w-full bg-teal-500 rounded-lg py-2 hover:bg-teal-800 transition-colors"
             onClick={handleGoogleSignIn}
+            className="flex items-center justify-center w-full bg-teal-500 rounded-lg py-2 hover:bg-teal-800 transition-colors"
           >
             <img
               src="https://media.wired.com/photos/5926ffe47034dc5f91bed4e8/master/w_1920,c_limit/google-logo.jpg"
