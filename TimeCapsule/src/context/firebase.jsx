@@ -8,16 +8,18 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   onAuthStateChanged,
+  signOut,
 } from "firebase/auth";
 import {
-  //getFirestore,
-  // collection,
-  // addDoc,
-  // getDocs,
-  // getDoc,
-  // doc,
-  // query,
-  // where,
+  getFirestore,
+  collection,
+  addDoc,
+  setDoc,
+  getDocs,
+  getDoc,
+  doc,
+  query,
+  where,
 } from "firebase/firestore";
 //import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -36,7 +38,7 @@ export const useFirebase = () => useContext(FirebaseContext);
 
 const firebaseApp = initializeApp(firebaseConfig);
 const firebaseAuth = getAuth(firebaseApp);
-// const firestore = getFirestore(firebaseApp);
+const firestore = getFirestore(firebaseApp);
 // const storage = getStorage(firebaseApp);
 
 const googleProvider = new GoogleAuthProvider();
@@ -59,9 +61,25 @@ export const FirebaseProvider = (props) => {
 
   const signinWithGoogle = () => signInWithPopup(firebaseAuth, googleProvider);
 
-  
-
   const isLoggedIn = user ? true : false;
+
+  const logout = async () => {
+    try {
+      await signOut(firebaseAuth);
+      console.log("User logged out successfully");
+    } catch (error) {
+      console.error("Logout failed:", error.message);
+    }
+  };
+
+  const addUser = async (userId, userData) => {
+    try {
+      await setDoc(doc(firestore, "users", userId), userData);
+    } catch (error) {
+      console.error("Error adding user to Firestore:", error);
+    }
+  };
+  
 
   return (
     <FirebaseContext.Provider
@@ -71,6 +89,8 @@ export const FirebaseProvider = (props) => {
         singinUserWithEmailAndPass,
         isLoggedIn,
         user,
+        addUser,
+        logout,
       }}
     >
       {props.children}
