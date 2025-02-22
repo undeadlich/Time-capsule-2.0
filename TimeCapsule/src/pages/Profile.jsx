@@ -1,7 +1,75 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFirebase } from "../context/firebase";
 import AddContentModal from "../components/AddContentModal";
+
+// Updated CardMenu component with click-outside functionality
+const CardMenu = ({ id, type, onEdit, onDelete }) => {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setMenuOpen(!menuOpen);
+  };
+
+  const handleEdit = (e) => {
+    e.stopPropagation();
+    setMenuOpen(false);
+    onEdit(id, type);
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    setMenuOpen(false);
+    onDelete(id, type);
+  };
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
+  return (
+    <div ref={menuRef} className="absolute top-2 right-2 z-20" onClick={(e) => e.stopPropagation()}>
+      <button onClick={toggleMenu} className="p-2 rounded-full hover:bg-gray-200">
+        <svg className="w-6 h-6 text-[#036c5f]" fill="currentColor" viewBox="0 0 20 20">
+          <circle cx="10" cy="4" r="2" />
+          <circle cx="10" cy="10" r="2" />
+          <circle cx="10" cy="16" r="2" />
+        </svg>
+      </button>
+      {menuOpen && (
+        <div className="absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded shadow-lg z-10">
+          <ul className="py-1">
+            <li>
+              <button
+                onClick={handleEdit}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Edit
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={handleDelete}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Delete
+              </button>
+            </li>
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -50,6 +118,22 @@ const Profile = () => {
     handleCloseModal();
   };
 
+  const handleEditContent = (id, type) => {
+    alert(`Edit ${type} ${id}`);
+    // Replace with your edit functionality
+  };
+
+  const handleDeleteContent = async (id, type) => {
+    try {
+      alert(`Delete ${type} ${id}`);
+      // Replace with your delete functionality, e.g., await deleteContent(id);
+      await fetchUserMedia();
+    } catch (error) {
+      console.error("Error deleting content:", error);
+      alert(error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
       {/* Blur background content when modal is open */}
@@ -82,14 +166,20 @@ const Profile = () => {
                 You haven't created any capsules yet.
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
                 {capsules.map((capsule) => (
                   <div
                     key={capsule}
-                    className="bg-white p-4 rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:shadow-xl transition-all"
                     onClick={() => navigate(`/${user.uid}/capsule/${capsule}`)}
+                    className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
                   >
-                    <h3 className="text-lg font-semibold text-[#036c5f]">
+                    <CardMenu
+                      id={capsule}
+                      type="capsule"
+                      onEdit={handleEditContent}
+                      onDelete={handleDeleteContent}
+                    />
+                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
                       Capsule {capsule}
                     </h3>
                   </div>
@@ -114,14 +204,20 @@ const Profile = () => {
                 You haven't created any albums yet.
               </p>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
                 {albums.map((album) => (
                   <div
                     key={album}
-                    className="bg-white p-4 rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:shadow-xl transition-all"
                     onClick={() => navigate(`/${user.uid}/album/${album}`)}
+                    className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
                   >
-                    <h3 className="text-lg font-semibold text-[#036c5f]">
+                    <CardMenu
+                      id={album}
+                      type="album"
+                      onEdit={handleEditContent}
+                      onDelete={handleDeleteContent}
+                    />
+                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
                       Album {album}
                     </h3>
                   </div>
@@ -151,7 +247,7 @@ const Profile = () => {
         </footer>
       </div>
 
-      {/* Modal Component rendered on top without a dark overlay */}
+      {/* Modal Component rendered on top */}
       {modalOpen && (
         <AddContentModal
           type={modalType}

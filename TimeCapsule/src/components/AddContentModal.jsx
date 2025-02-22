@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useFirebase } from '../context/firebase';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-const AddContentModal = ({ type, onClose }) => {
+const AddContentModal = ({ type, onClose, onSubmit }) => {
   const { addContent } = useFirebase();
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
@@ -12,6 +12,21 @@ const AddContentModal = ({ type, onClose }) => {
   const [recipients, setRecipients] = useState("");
   const [albumType, setAlbumType] = useState("public");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Ref for the modal content container
+  const modalRef = useRef(null);
+
+  // Close modal if click happens outside modal content
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (modalRef.current && !modalRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -30,7 +45,9 @@ const AddContentModal = ({ type, onClose }) => {
         files,
         ...(type === "capsule" && {
           lockUntil,
-          recipients: recipients ? recipients.split(",").map(email => email.trim()) : []
+          recipients: recipients
+            ? recipients.split(",").map(email => email.trim())
+            : []
         }),
         ...(type === "album" && { albumType })
       };
@@ -47,7 +64,10 @@ const AddContentModal = ({ type, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="relative bg-stone-100 rounded-lg p-6 w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f] max-h-[90vh] overflow-y-auto">
+      <div
+        ref={modalRef}
+        className="relative bg-stone-100 rounded-lg p-6 w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f] max-h-[90vh] overflow-y-auto"
+      >
         <button 
           onClick={onClose} 
           className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 text-lg"
@@ -75,7 +95,9 @@ const AddContentModal = ({ type, onClose }) => {
           {type === "capsule" && (
             <>
               <div className="mb-4">
-                <label className="block text-[#036c5f] mb-1 font-medium">Unlock Date & Time</label>
+                <label className="block text-[#036c5f] mb-1 font-medium">
+                  Unlock Date & Time
+                </label>
                 <input 
                   type="datetime-local"
                   value={lockUntil}
@@ -103,7 +125,9 @@ const AddContentModal = ({ type, onClose }) => {
 
           {type === "album" && (
             <div className="mb-4">
-              <label className="block text-[#036c5f] mb-1 font-medium">Privacy Settings</label>
+              <label className="block text-[#036c5f] mb-1 font-medium">
+                Privacy Settings
+              </label>
               <select
                 value={albumType}
                 onChange={(e) => setAlbumType(e.target.value)}
@@ -116,7 +140,9 @@ const AddContentModal = ({ type, onClose }) => {
           )}
 
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1 font-medium">Media Upload</label>
+            <label className="block text-[#036c5f] mb-1 font-medium">
+              Media Upload
+            </label>
             <div className="border-2 border-dashed border-[#048c7f] rounded-lg p-4 text-center">
               <input 
                 id="fileInput"
@@ -147,7 +173,9 @@ const AddContentModal = ({ type, onClose }) => {
           </div>
 
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1 font-medium">Notes</label>
+            <label className="block text-[#036c5f] mb-1 font-medium">
+              Notes
+            </label>
             <textarea 
               value={note}
               onChange={(e) => setNote(e.target.value)}
