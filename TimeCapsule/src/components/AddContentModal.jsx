@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
+import { useFirebase } from '../context/firebase';
 
-const AddContentModal = ({ type, onClose, onSubmit }) => {
+const AddContentModal = ({ type, onClose }) => {
+  const { addContent } = useFirebase();
+
   // Common fields
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
@@ -18,27 +21,22 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
     setFiles(selectedFiles);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Prepare data object including additional fields based on type
-    const data = { 
-      type, 
-      name, 
-      note, 
-      files 
-    };
+    const data = { type, name, note, files };
     if (type === "capsule") {
       data.lockUntil = lockUntil;
-      data.recipients = recipients; // You can split on commas later if needed
+      data.recipients = recipients ? recipients.split(",").map(email => email.trim()) : [];
     } else if (type === "album") {
       data.albumType = albumType;
     }
-    onSubmit(data);
+    
+    await addContent(data);
+    onClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Modal container with themed top border */}
       <div className="relative bg-stone-100 rounded-lg p-6 w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f]">
         <button 
           onClick={onClose} 
@@ -50,7 +48,6 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
           Add {type === "capsule" ? "Capsule" : "Album"}
         </h2>
         <form onSubmit={handleSubmit}>
-          {/* Title Field */}
           <div className="mb-4">
             <label className="block text-[#036c5f] mb-1">
               {type === "capsule" ? "Capsule Title" : "Album Title"}
@@ -64,15 +61,10 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
               required
             />
           </div>
-
-          {/* Conditional fields based on type */}
           {type === "capsule" && (
             <>
-              {/* Lock Until Field */}
               <div className="mb-4">
-                <label className="block text-[#036c5f] mb-1">
-                  Lock Until
-                </label>
+                <label className="block text-[#036c5f] mb-1">Lock Until</label>
                 <input 
                   type="datetime-local"
                   value={lockUntil}
@@ -81,11 +73,8 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
                   required
                 />
               </div>
-              {/* Recipients Field */}
               <div className="mb-4">
-                <label className="block text-[#036c5f] mb-1">
-                  Recipients (comma separated emails)
-                </label>
+                <label className="block text-[#036c5f] mb-1">Recipients (comma separated emails)</label>
                 <input 
                   type="text"
                   placeholder="example1@mail.com, example2@mail.com"
@@ -96,12 +85,9 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
               </div>
             </>
           )}
-
           {type === "album" && (
             <div className="mb-4">
-              <label className="block text-[#036c5f] mb-1">
-                Album Type
-              </label>
+              <label className="block text-[#036c5f] mb-1">Album Type</label>
               <select
                 value={albumType}
                 onChange={(e) => setAlbumType(e.target.value)}
@@ -112,12 +98,8 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
               </select>
             </div>
           )}
-
-          {/* File Upload */}
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1">
-              Upload Images/Videos
-            </label>
+            <label className="block text-[#036c5f] mb-1">Upload Images/Videos</label>
             <input 
               id="fileInput"
               type="file" 
@@ -135,12 +117,8 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
               </p>
             )}
           </div>
-
-          {/* Note Field */}
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1">
-              Note (optional)
-            </label>
+            <label className="block text-[#036c5f] mb-1">Note (optional)</label>
             <textarea 
               value={note}
               onChange={(e) => setNote(e.target.value)}
@@ -148,8 +126,6 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
               className="w-full px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 bg-[#b3e0dc] focus:ring-[#036c5f]"
             ></textarea>
           </div>
-
-          {/* Actions */}
           <div className="flex justify-end">
             <button 
               type="button" 
