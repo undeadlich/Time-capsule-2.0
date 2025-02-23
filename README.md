@@ -164,11 +164,15 @@ Before diving into Time-capsule-2.0, ensure your environment meets these require
 
 2. **Start the NSFW Detector AI**
    ```sh
+   cd ..
+   cd NSFW-FILTER
    python app.py   # or python3 app.py
    ```
 
 3. **Launch the Descriptive Image Search AI**
    ```sh
+   cd ..
+   cd Desc Search Ai
    python app.py   # or python3 app.py
    ```
 
