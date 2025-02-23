@@ -181,7 +181,7 @@ export const FirebaseProvider = (props) => {
   };
 
   const addContent = async (contentData) => {
-    const { type, name, note, files, lockUntil, recipients, albumType } = contentData;
+    const { type, name, note, files, lockUntil, recipients, albumType,community } = contentData;
     const collectionName = type === "capsule" ? "capsules" : "albums";
     const fileURLs = [];
     
@@ -205,6 +205,7 @@ export const FirebaseProvider = (props) => {
         : recipients?.split(",").map((email) => email.trim()) || [];
     } else if (type === "album") {
       dataToStore.albumType = albumType;
+      dataToStore.community = community;
     }
 
     try {
@@ -456,8 +457,154 @@ const getUserById = async (userId) => {
     return null;
   }
 };
+const shareAlbum = async (albumId, emailString) => {
+  const emails = emailString.split(",").map(email => email.trim());
+  try {
+    for (const email of emails) {
+      const userQuery = query(collection(firestore, "users"), where("email", "==", email));
+      const querySnapshot = await getDocs(userQuery);
+      if (!querySnapshot.empty) {
+        querySnapshot.forEach(async (docSnap) => {
+          const recipientId = docSnap.id;
+          await updateReceivedUserMedia(recipientId, albumId, "album");
+        });
+      } else {
+        console.warn(`No user found with email: ${email}`);
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Error sharing album:", error);
+    return false;
+  }
+};
+
+// Function to share a capsule with recipient(s)
+const shareCapsule = async (capsuleId, emailString) => {
+  const emails = emailString.split(",").map(email => email.trim());
+  try {
+    for (const email of emails) {
+      const userQuery = query(collection(firestore, "users"), where("email", "==", email));
+      const querySnapshot = await getDocs(userQuery);
+      if (!querySnapshot.empty) {
+        querySnapshot.forEach(async (docSnap) => {
+          const recipientId = docSnap.id;
+          await updateReceivedUserMedia(recipientId, capsuleId, "capsule");
+        });
+      } else {
+        console.warn(`No user found with email: ${email}`);
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error("Error sharing capsule:", error);
+    return false;
+  }
+};
+// Function to delete an accepted capsule for a recipient
+const deleteAcceptedCapsule = async (recipientId, capsuleId) => {
+  if (!recipientId) {
+    console.error("No recipient user ID provided.");
+    return false;
+  }
+  const receivedMediaRef = doc(firestore, "recievedusermedia", recipientId);
+  try {
+    await ensureReceivedUserMedia(recipientId); // Ensure the doc exists
+    await updateDoc(receivedMediaRef, {
+      acceptedCapsules: arrayRemove(capsuleId)
+    });
+    console.log(`Accepted capsule ${capsuleId} removed for recipient ${recipientId}`);
+    return true;
+  } catch (error) {
+    console.error("Error deleting accepted capsule:", error);
+    return false;
+  }
+};
+
+// Function to delete an accepted album for a recipient
+const deleteAcceptedAlbum = async (recipientId, albumId) => {
+  if (!recipientId) {
+    console.error("No recipient user ID provided.");
+    return false;
+  }
+  const receivedMediaRef = doc(firestore, "recievedusermedia", recipientId);
+  try {
+    await ensureReceivedUserMedia(recipientId); // Ensure the doc exists
+    await updateDoc(receivedMediaRef, {
+      acceptedAlbums: arrayRemove(albumId)
+    });
+    console.log(`Accepted album ${albumId} removed for recipient ${recipientId}`);
+    return true;
+  } catch (error) {
+    console.error("Error deleting accepted album:", error);
+    return false;
+  }
+};
 
 
+const updateCapsule = async (capsuleId, updatedData) => {
+  try {
+    await updateDoc(doc(firestore, "capsules", capsuleId), updatedData);
+    console.log(`Capsule ${capsuleId} updated successfully.`);
+    return true;
+  } catch (error) {
+    console.error("Error updating capsule:", error);
+    return false;
+  }
+};
+const updateAlbum = async (albumId, updatedData) => {
+  try {
+    await updateDoc(doc(firestore, "albums", albumId), updatedData);
+    console.log(`Album ${albumId} updated successfully.`);
+    return true;
+  } catch (error) {
+    console.error("Error updating album:", error);
+    return false;
+  }
+};
+const getPublicAlbums = async () => {
+  try {
+    const publicAlbumsQuery = query(
+      collection(firestore, "albums"),
+      where("albumType", "==", "public")
+    );
+    const querySnapshot = await getDocs(publicAlbumsQuery);
+    const publicAlbums = [];
+    querySnapshot.forEach((doc) => {
+      publicAlbums.push({ id: doc.id, ...doc.data() });
+    });
+    return publicAlbums;
+  } catch (error) {
+    console.error("Error fetching public albums:", error);
+    return [];
+  }
+};
+
+const searchPublicAlbumsByCommunity = async (communityQuery) => {
+  try {
+    // First, get all public albums
+    const publicAlbumsQuery = query(
+      collection(firestore, "albums"),
+      where("albumType", "==", "public")
+    );
+    const querySnapshot = await getDocs(publicAlbumsQuery);
+    const results = [];
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      // Check if the 'community' field exists and includes the query string (case-insensitive)
+      if (
+        data.community &&
+        data.community.toLowerCase().includes(communityQuery.toLowerCase())
+      ) {
+        results.push({ id: docSnap.id, ...data });
+      }
+    });
+    return results;
+  } catch (error) {
+    console.error("Error searching public albums by community:", error);
+    return [];
+  }
+};
   return (
     <FirebaseContext.Provider
       value={{
@@ -483,6 +630,14 @@ const getUserById = async (userId) => {
         rejectReceivedContent,
         getReceivedMedia,
         getUserById,
+        shareAlbum,
+        shareCapsule,
+        deleteAcceptedAlbum,
+        deleteAcceptedCapsule,
+        updateCapsule,
+        updateAlbum,  
+        getPublicAlbums,
+        searchPublicAlbumsByCommunity,
       }}
     >
       {props.children}

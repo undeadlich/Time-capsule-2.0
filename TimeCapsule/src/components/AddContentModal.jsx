@@ -11,7 +11,7 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
   const [lockUntil, setLockUntil] = useState("");
   const [recipients, setRecipients] = useState("");
   const [albumType, setAlbumType] = useState("public");
-  const [community, setCommunity] = useState(""); // New state for community input (for albums)
+  const [community, setCommunity] = useState(""); // For community input (albums)
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Ref for the modal content container
@@ -216,7 +216,7 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
             <button 
               type="submit" 
               className="bg-[#048c7f] text-white px-6 py-2 rounded-lg hover:bg-[#036c5f] transition-colors disabled:opacity-50"
-              disabled={isSubmitting || files.length === 0}
+              disabled={isSubmitting}  // Media is not required now
             >
               {isSubmitting ? 'Creating...' : `Create ${type === "capsule" ? 'Capsule' : 'Album'}`}
             </button>
