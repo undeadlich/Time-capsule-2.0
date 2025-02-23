@@ -11,6 +11,7 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
   const [lockUntil, setLockUntil] = useState("");
   const [recipients, setRecipients] = useState("");
   const [albumType, setAlbumType] = useState("public");
+  const [community, setCommunity] = useState(""); // New state for community input (for albums)
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Ref for the modal content container
@@ -49,7 +50,7 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
             ? recipients.split(",").map(email => email.trim())
             : []
         }),
-        ...(type === "album" && { albumType })
+        ...(type === "album" && { albumType, community })
       };
       
       await addContent(data);
@@ -124,19 +125,34 @@ const AddContentModal = ({ type, onClose, onSubmit }) => {
           )}
 
           {type === "album" && (
-            <div className="mb-4">
-              <label className="block text-[#036c5f] mb-1 font-medium">
-                Privacy Settings
-              </label>
-              <select
-                value={albumType}
-                onChange={(e) => setAlbumType(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 bg-[#b3e0dc] focus:ring-[#036c5f]"
-              >
-                <option value="public">Public - Visible to everyone</option>
-                <option value="private">Private - Only visible to you</option>
-              </select>
-            </div>
+            <>
+              <div className="mb-4">
+                <label className="block text-[#036c5f] mb-1 font-medium">
+                  Privacy Settings
+                </label>
+                <select
+                  value={albumType}
+                  onChange={(e) => setAlbumType(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 bg-[#b3e0dc] focus:ring-[#036c5f]"
+                >
+                  <option value="public">Public - Visible to everyone</option>
+                  <option value="private">Private - Only visible to you</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-[#036c5f] mb-1 font-medium">
+                  Community
+                </label>
+                <input 
+                  type="text"
+                  placeholder="Enter community name"
+                  value={community}
+                  onChange={(e) => setCommunity(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 bg-[#b3e0dc] focus:ring-[#036c5f]"
+                  required
+                />
+              </div>
+            </>
           )}
 
           <div className="mb-4">

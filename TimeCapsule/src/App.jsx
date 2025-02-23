@@ -4,7 +4,7 @@ import Signup from './pages/Signup.jsx';
 import HomePage from './pages/Home.jsx';
 import Profile from './pages/Profile.jsx';
 import AlbumPage from './pages/Albums.jsx';
-
+import CapsulePage from './pages/Capsules.jsx';
 function App() {
   return (
     <>
@@ -14,7 +14,7 @@ function App() {
         <Route path='/signup' element={<Signup />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='/profile/album/:albumId' element={<AlbumPage />} />
-        <Route path='/profile/capsule/:capsuleId' element={<AlbumPage />} />
+        <Route path='/profile/capsule/:capsuleId' element={<CapsulePage />} />
       </Routes>
     </>
   );

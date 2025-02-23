@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useFirebase } from "../context/firebase";
 
-// Component for the three-dot menu on each media card
 const MediaCardMenu = ({ onDelete }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -26,11 +25,12 @@ const MediaCardMenu = ({ onDelete }) => {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
   return (
-    <div ref={menuRef} className="absolute top-1 right-1">
+    <div ref={menuRef} className="absolute top-1 right-1" onClick={(e) => e.stopPropagation()}>
       <button onClick={toggleMenu} className="p-1 rounded-full hover:bg-gray-200">
         <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
           <circle cx="10" cy="4" r="1.5" />
@@ -178,20 +178,20 @@ const AlbumPage = () => {
               {mediaItems.map((url, index) => (
                 <div 
                   key={index} 
-                  className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-100"
+                  className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-all"
                   onClick={() => setSelectedMediaIndex(index)}
                 >
                   {isImage(url) ? (
                     <img 
                       src={url} 
                       alt={`Media ${index}`} 
-                      className="w-full h-40 object-cover rounded"
+                      className="w-full object-cover rounded aspect-[3/2]"
                     />
                   ) : (
                     <video 
                       src={url} 
                       controls 
-                      className="w-full h-40 object-cover rounded"
+                      className="w-full object-cover rounded aspect-[3/2]"
                     ></video>
                   )}
                   <MediaCardMenu onDelete={() => handleDeleteMedia(url)} />
@@ -202,16 +202,16 @@ const AlbumPage = () => {
         </section>
       </main>
 
-      {/* Modal for enlarged media with next/previous navigation */}
+      {/* Enlarged Media Modal with blurred background */}
       {selectedMediaIndex !== null && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-30 backdrop-blur-md"
           onClick={() => setSelectedMediaIndex(null)}
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setSelectedMediaIndex(null)}
-              className="absolute top-0 right-0 m-2 text-white text-2xl"
+              className="absolute top-0 right-0 m-2 bg-black bg-opacity-50 rounded-full p-1 text-white text-2xl"
             >
               &times;
             </button>
@@ -222,12 +222,16 @@ const AlbumPage = () => {
                 className="max-w-full max-h-screen" 
               />
             ) : (
-              <video src={mediaItems[selectedMediaIndex]} controls className="max-w-full max-h-screen"></video>
+              <video 
+                src={mediaItems[selectedMediaIndex]} 
+                controls 
+                className="max-w-full max-h-screen"
+              ></video>
             )}
             {selectedMediaIndex > 0 && (
               <button 
                 onClick={() => setSelectedMediaIndex(selectedMediaIndex - 1)}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 text-white text-3xl p-2"
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-1 text-white text-3xl"
               >
                 &#8249;
               </button>
@@ -235,7 +239,7 @@ const AlbumPage = () => {
             {selectedMediaIndex < mediaItems.length - 1 && (
               <button 
                 onClick={() => setSelectedMediaIndex(selectedMediaIndex + 1)}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 text-white text-3xl p-2"
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 rounded-full p-1 text-white text-3xl"
               >
                 &#8250;
               </button>
