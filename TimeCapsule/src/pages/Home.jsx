@@ -149,6 +149,17 @@ const HomePage = () => {
           </div>
         </section>
 
+        {/* Search Section */}
+        <section className="py-4">
+          <div className="container mx-auto px-4 text-center">
+            <input 
+              type="text"
+              placeholder="Search..."
+              className="w-full max-w-md px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#036c5f]"
+            />
+          </div>
+        </section>
+
         {/* Features Section */}
         <section className="py-16">
           <div className="container mx-auto px-4">
@@ -200,7 +211,6 @@ const HomePage = () => {
                 </button>
               )}
             </div>
-            {/** Ensure that publicAlbums is defined in your Firebase context **/}
             {publicAlbums && publicAlbums.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
                 {publicAlbums.map((album) => (
@@ -247,4 +257,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-  

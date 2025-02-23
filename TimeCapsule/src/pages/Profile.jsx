@@ -88,6 +88,72 @@ const CardMenu = ({ id, type, onEdit, onDelete, onShare }) => {
   );
 };
 
+
+
+const Header = () => {
+  const { logout } = useFirebase();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const toggleDropdown = (e) => {
+    e.stopPropagation();
+    setDropdownOpen(prev => !prev);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <header className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-6">
+      <div className="container mx-auto flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-stone-300">Your Profile</h1>
+        <div className="relative" ref={dropdownRef}>
+          <button onClick={toggleDropdown} className="text-stone-300 hover:underline">
+            Menu
+          </button>
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-40 bg-white rounded shadow-lg z-10">
+              <ul className="py-1">
+                <li>
+                  <Link
+                    to="/"
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      logout();
+                      navigate('/login');
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+};
+
+
+
+
 const Profile = () => {
   const navigate = useNavigate();
   const {
@@ -292,16 +358,24 @@ const Profile = () => {
     setShareEmail("");
   };
 
+
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
       <div className={modalOpen ? "filter blur-sm" : ""}>
         {/* Header */}
-        <header className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-6">
-          <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-stone-300">Your Profile</h1>
-            <Link to="/" className="text-stone-300 hover:underline">Home</Link>
+        
+        <Header />
+
+        <section className="py-4">
+          <div className="container mx-auto px-4 text-center">
+            <input 
+              type="text"
+              placeholder="Search..."
+              className="w-full max-w-md px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#036c5f]"
+            />
           </div>
-        </header>
+        </section>
 
         {/* Main Content */}
         <main className="container mx-auto p-6">
