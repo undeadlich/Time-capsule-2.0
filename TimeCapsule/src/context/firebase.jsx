@@ -282,6 +282,8 @@ export const FirebaseProvider = (props) => {
   
 
   // New function: Update received user media for a recipient
+  
+  // New function: Update received user media for a recipient
   const updateReceivedUserMedia = async (userId, contentId, type) => {
     if (!userId) {
       console.error("No recipient user ID provided.");
@@ -368,38 +370,72 @@ export const FirebaseProvider = (props) => {
   };
 
   // New function: Accept a received capsule or album for a recipient
-const acceptReceivedContent = async (recipientId, contentId, type) => {
-  if (!recipientId) {
-    console.error("No recipient user ID provided.");
-    return false;
-  }
-  const receivedMediaRef = doc(firestore, "recievedusermedia", recipientId);
-  try {
-    // First, ensure the received media document exists
-    await ensureReceivedUserMedia(recipientId);
 
-    // Remove the content from the pending received array
-    await updateDoc(receivedMediaRef, {
-      [type === "capsule" ? "capsules" : "albums"]: arrayRemove(contentId),
-    });
-    
-    // Then, add the content to the accepted media array
-    await updateDoc(
-      receivedMediaRef,
-      {
-        [type === "capsule" ? "acceptedCapsules" : "acceptedAlbums"]: arrayUnion(contentId),
-      },
-      { merge: true }
-    );
-    
-    console.log(`Content ${contentId} accepted for recipient ${recipientId}`);
-    return true;
-  } catch (error) {
-    console.error("Error accepting received content:", error);
-    return false;
-  }
-};
+  // New function: Accept a received capsule or album for a recipient
+  const acceptReceivedContent = async (recipientId, contentId, type) => {
+    if (!recipientId) {
+      console.error("No recipient user ID provided.");
+      return false;
+    }
+    const receivedMediaRef = doc(firestore, "recievedusermedia", recipientId);
+    try {
+      await ensureReceivedUserMedia(recipientId);
+      // Remove from pending array
+      await updateDoc(receivedMediaRef, {
+        [type === "capsule" ? "capsules" : "albums"]: arrayRemove(contentId),
+      });
+      // Add to accepted array
+      await updateDoc(
+        receivedMediaRef,
+        {
+          [type === "capsule" ? "acceptedCapsules" : "acceptedAlbums"]: arrayUnion(contentId),
+        },
+        { merge: true }
+      );
+      console.log(`Content ${contentId} accepted for recipient ${recipientId}`);
+      return true;
+    } catch (error) {
+      console.error("Error accepting received content:", error);
+      return false;
+    }
+  };
 
+  // New function: Reject (decline) a received capsule or album for a recipient
+  const rejectReceivedContent = async (recipientId, contentId, type) => {
+    if (!recipientId) {
+      console.error("No recipient user ID provided.");
+      return false;
+    }
+    const receivedMediaRef = doc(firestore, "recievedusermedia", recipientId);
+    try {
+      await ensureReceivedUserMedia(recipientId);
+      // Simply remove from pending array
+      await updateDoc(receivedMediaRef, {
+        [type === "capsule" ? "capsules" : "albums"]: arrayRemove(contentId),
+      });
+      console.log(`Content ${contentId} rejected for recipient ${recipientId}`);
+      return true;
+    } catch (error) {
+      console.error("Error rejecting received content:", error);
+      return false;
+    }
+  };
+  const getReceivedMedia = async (userId) => {
+    if (!userId) {
+      console.error("No user ID provided.");
+      return { capsules: [], acceptedCapsules: [], albums: [], acceptedAlbums: [] };
+    }
+    const receivedMediaRef = doc(firestore, "recievedusermedia", userId);
+    try {
+      const receivedSnap = await getDoc(receivedMediaRef);
+      if (receivedSnap.exists()) {
+        return receivedSnap.data();
+      }
+    } catch (error) {
+      console.error("Error fetching received media:", error);
+    }
+    return { capsules: [], acceptedCapsules: [], albums: [], acceptedAlbums: [] };
+  };
 
   return (
     <FirebaseContext.Provider
@@ -423,6 +459,8 @@ const acceptReceivedContent = async (recipientId, contentId, type) => {
         acceptReceivedContent,
         ensureReceivedUserMedia,
         updateReceivedUserMedia,
+        rejectReceivedContent,
+        getReceivedMedia,
       }}
     >
       {props.children}

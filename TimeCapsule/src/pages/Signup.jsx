@@ -39,7 +39,7 @@ const Signup = () => {
       // Store user details in Firestore
       await addUser(user.uid, { firstName, lastName, email });
 
-      alert("Signup successful!");
+      //alert("Signup successful!");
       navigate("/");
     } catch (error) {
       alert(error.message);
@@ -73,7 +73,7 @@ const Signup = () => {
           'url("https://img.freepik.com/free-photo/blue-pigment-water_23-2147798188.jpg?ga=GA1.1.397460206.1740223550&semt=ais_hybrid")',
       }}
     >
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center w-full">
       <div className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-8 rounded-lg shadow-xl w-full max-w-md">
         <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">
           Create Your Capsule Account

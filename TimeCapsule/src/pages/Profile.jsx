@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore"; // For fetching received media if needed
 import { useFirebase } from "../context/firebase";
 import AddContentModal from "../components/AddContentModal";
 
-// Updated CardMenu component with click-outside functionality
+// CardMenu component (unchanged)
 const CardMenu = ({ id, type, onEdit, onDelete }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -73,35 +74,93 @@ const CardMenu = ({ id, type, onEdit, onDelete }) => {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, getUserMedia, getCapsuleById, getAlbumById, addContent,deleteAlbum,deleteCapsule } = useFirebase();
-  const [capsules, setCapsules] = useState([]);
-  const [albums, setAlbums] = useState([]);
+  const {
+    user,
+    getUserMedia,
+    getReceivedMedia, // Returns { capsules, acceptedCapsules, albums, acceptedAlbums }
+    getCapsuleById,
+    getAlbumById,
+    addContent,
+    deleteCapsule,
+    deleteAlbum,
+    acceptReceivedContent,
+    rejectReceivedContent,
+  } = useFirebase();
+
+  const [capsules, setCapsules] = useState([]); // Personal capsules
+  const [albums, setAlbums] = useState([]); // Personal albums
+
+  // Pending received media
+  const [receivedCapsules, setReceivedCapsules] = useState([]);
+  const [receivedAlbums, setReceivedAlbums] = useState([]);
+
+  // Accepted received media
+  const [acceptedCapsules, setAcceptedCapsules] = useState([]);
+  const [acceptedAlbums, setAcceptedAlbums] = useState([]);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(""); // "capsule" or "album"
 
-  // Fetch user media (capsules and albums)
+  // Fetch personal media details from "userMedia" document
   const fetchUserMediaDetails = async () => {
     if (user?.uid) {
       try {
         const userMedia = await getUserMedia(user.uid);
         const capsuleIds = userMedia.capsules || [];
         const albumIds = userMedia.albums || [];
-        
+
         const capsulePromises = capsuleIds.map((id) => getCapsuleById(id));
         const capsuleDetails = await Promise.all(capsulePromises);
         setCapsules(capsuleDetails.filter((item) => item !== null));
-        
+
         const albumPromises = albumIds.map((id) => getAlbumById(id));
         const albumDetails = await Promise.all(albumPromises);
         setAlbums(albumDetails.filter((item) => item !== null));
       } catch (error) {
-        console.error("Error fetching user media details:", error);
+        console.error("Error fetching personal media details:", error);
+      }
+    }
+  };
+
+  // Fetch received media details using getReceivedMedia from Firebase context
+  const fetchReceivedMediaDetails = async () => {
+    if (user?.uid) {
+      try {
+        const receivedData = await getReceivedMedia(user.uid);
+        // Pending received items
+        const pendingCapsuleIds = receivedData.capsules || [];
+        const pendingAlbumIds = receivedData.albums || [];
+        // Accepted received items
+        const acceptedCapsuleIds = receivedData.acceptedCapsules || [];
+        const acceptedAlbumIds = receivedData.acceptedAlbums || [];
+
+        const pendingCapsulePromises = pendingCapsuleIds.map((id) => getCapsuleById(id));
+        const pendingCapsuleDetails = await Promise.all(pendingCapsulePromises);
+        setReceivedCapsules(pendingCapsuleDetails.filter((item) => item !== null));
+
+        const pendingAlbumPromises = pendingAlbumIds.map((id) => getAlbumById(id));
+        const pendingAlbumDetails = await Promise.all(pendingAlbumPromises);
+        setReceivedAlbums(pendingAlbumDetails.filter((item) => item !== null));
+
+        const acceptedCapsulePromises = acceptedCapsuleIds.map((id) => getCapsuleById(id));
+        const acceptedCapsuleDetails = await Promise.all(acceptedCapsulePromises);
+        setAcceptedCapsules(acceptedCapsuleDetails.filter((item) => item !== null));
+
+        const acceptedAlbumPromises = acceptedAlbumIds.map((id) => getAlbumById(id));
+        const acceptedAlbumDetails = await Promise.all(acceptedAlbumPromises);
+        setAcceptedAlbums(acceptedAlbumDetails.filter((item) => item !== null));
+      } catch (error) {
+        console.error("Error fetching received media details:", error);
       }
     }
   };
 
   useEffect(() => {
     fetchUserMediaDetails();
+  }, [user]);
+
+  useEffect(() => {
+    fetchReceivedMediaDetails();
   }, [user]);
 
   const handleOpenModal = (type) => {
@@ -111,7 +170,8 @@ const Profile = () => {
 
   const handleCloseModal = async () => {
     setModalOpen(false);
-    await fetchUserMediaDetails(); // Refresh data after modal closes
+    await fetchUserMediaDetails();
+    await fetchReceivedMediaDetails();
   };
 
   const handleSubmitContent = async (data) => {
@@ -119,6 +179,7 @@ const Profile = () => {
       const contentId = await addContent(data);
       if (!contentId) throw new Error("Failed to add content.");
       await fetchUserMediaDetails();
+      await fetchReceivedMediaDetails();
     } catch (error) {
       console.error("Error adding content:", error);
       alert(error.message);
@@ -133,32 +194,52 @@ const Profile = () => {
 
   const handleDeleteContent = async (id, type) => {
     try {
-      // Optional: ask for confirmation before deletion
       if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
-
       if (type === "capsule") {
         await deleteCapsule(user.uid, id);
       } else if (type === "album") {
         await deleteAlbum(user.uid, id);
       }
       await fetchUserMediaDetails();
+      await fetchReceivedMediaDetails();
     } catch (error) {
       console.error("Error deleting content:", error);
       alert(error.message);
     }
   };
 
+  const handleAcceptReceived = async (id, type) => {
+    try {
+      const success = await acceptReceivedContent(user.uid, id, type);
+      if (success) {
+        await fetchReceivedMediaDetails();
+      }
+    } catch (error) {
+      console.error("Error accepting content:", error);
+      alert(error.message);
+    }
+  };
+
+  const handleRejectReceived = async (id, type) => {
+    try {
+      const success = await rejectReceivedContent(user.uid, id, type);
+      if (success) {
+        await fetchReceivedMediaDetails();
+      }
+    } catch (error) {
+      console.error("Error rejecting content:", error);
+      alert(error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
-      {/* Blur background content when modal is open */}
       <div className={modalOpen ? "filter blur-sm" : ""}>
         {/* Header */}
         <header className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-6">
           <div className="container mx-auto flex justify-between items-center">
             <h1 className="text-2xl font-bold text-stone-300">Your Profile</h1>
-            <Link to="/" className="text-stone-300 hover:underline">
-              Home
-            </Link>
+            <Link to="/" className="text-stone-300 hover:underline">Home</Link>
           </div>
         </header>
 
@@ -176,9 +257,7 @@ const Profile = () => {
               </button>
             </div>
             {capsules.length === 0 ? (
-              <p className="text-gray-700">
-                You haven't created any capsules yet.
-              </p>
+              <p className="text-gray-700">You haven't created any capsules yet.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
                 {capsules.map((capsule) => (
@@ -202,7 +281,7 @@ const Profile = () => {
             )}
           </section>
 
-          {/* Albums Section */}
+          {/* Personal Albums Section */}
           <section className="mb-8">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-[#036c5f]">Your Albums</h2>
@@ -214,9 +293,7 @@ const Profile = () => {
               </button>
             </div>
             {albums.length === 0 ? (
-              <p className="text-gray-700">
-                You haven't created any albums yet.
-              </p>
+              <p className="text-gray-700">You haven't created any albums yet.</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
                 {albums.map((album) => (
@@ -232,7 +309,143 @@ const Profile = () => {
                       onDelete={handleDeleteContent}
                     />
                     <h3 className="text-lg font-semibold text-[#036c5f] text-center">
-                       {album.name}
+                      {album.name}
+                    </h3>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Received Capsules Section (Pending) */}
+          <section className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#036c5f]">Received Capsules (Pending)</h2>
+            </div>
+            {receivedCapsules.length === 0 ? (
+              <p className="text-gray-700">You haven't received any capsules yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+                {receivedCapsules.map((capsule) => (
+                  <div
+                    key={capsule.id}
+                    onClick={() => navigate(`/profile/capsule/${capsule.id}`)}
+                    className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
+                  >
+                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                      {capsule.name}
+                    </h3>
+                    <div className="absolute bottom-2 right-2 space-x-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAcceptReceived(capsule.id, "capsule");
+                        }}
+                        className="bg-green-500 text-white px-2 py-1 text-xs rounded hover:bg-green-600"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRejectReceived(capsule.id, "capsule");
+                        }}
+                        className="bg-red-500 text-white px-2 py-1 text-xs rounded hover:bg-red-600"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Accepted Capsules Section */}
+          <section className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#036c5f]">Accepted Capsules</h2>
+            </div>
+            {acceptedCapsules.length === 0 ? (
+              <p className="text-gray-700">No accepted capsules.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+                {acceptedCapsules.map((capsule) => (
+                  <div
+                    key={capsule.id}
+                    onClick={() => navigate(`/profile/capsule/${capsule.id}`)}
+                    className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
+                  >
+                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                      {capsule.name}
+                    </h3>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Received Albums Section (Pending) */}
+          <section className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#036c5f]">Received Albums (Pending)</h2>
+            </div>
+            {receivedAlbums.length === 0 ? (
+              <p className="text-gray-700">You haven't received any albums yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+                {receivedAlbums.map((album) => (
+                  <div
+                    key={album.id}
+                    onClick={() => navigate(`/profile/album/${album.id}`)}
+                    className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
+                  >
+                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                      {album.name}
+                    </h3>
+                    <div className="absolute bottom-2 right-2 space-x-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAcceptReceived(album.id, "album");
+                        }}
+                        className="bg-green-500 text-white px-2 py-1 text-xs rounded hover:bg-green-600"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRejectReceived(album.id, "album");
+                        }}
+                        className="bg-red-500 text-white px-2 py-1 text-xs rounded hover:bg-red-600"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Accepted Albums Section */}
+          <section className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#036c5f]">Accepted Albums</h2>
+            </div>
+            {acceptedAlbums.length === 0 ? (
+              <p className="text-gray-700">No accepted albums.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
+                {acceptedAlbums.map((album) => (
+                  <div
+                    key={album.id}
+                    onClick={() => navigate(`/profile/album/${album.id}`)}
+                    className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
+                  >
+                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                      {album.name}
                     </h3>
                   </div>
                 ))}
@@ -242,9 +455,7 @@ const Profile = () => {
 
           {/* Other Features Section */}
           <section>
-            <h2 className="text-xl font-bold text-[#036c5f] mb-4">
-              Other Features
-            </h2>
+            <h2 className="text-xl font-bold text-[#036c5f] mb-4">Other Features</h2>
             <div className="bg-stone-300 p-4 rounded shadow">
               <p className="text-gray-800">
                 Explore additional features like shared capsules, recent activity, and more...
@@ -252,16 +463,8 @@ const Profile = () => {
             </div>
           </section>
         </main>
-
-        {/* Footer */}
-        <footer className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] py-4">
-          <div className="container mx-auto text-center text-stone-300">
-            &copy; {new Date().getFullYear()} Time Capsule 2.0. All rights reserved.
-          </div>
-        </footer>
       </div>
 
-      {/* Modal Component rendered on top */}
       {modalOpen && (
         <AddContentModal
           type={modalType}
