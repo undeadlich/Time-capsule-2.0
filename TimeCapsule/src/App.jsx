@@ -14,6 +14,7 @@ function App() {
         <Route path='/signup' element={<Signup />} />
         <Route path='/profile' element={<Profile />} />
         <Route path='/profile/album/:albumId' element={<AlbumPage />} />
+        <Route path='/profile/capsule/:capsuleId' element={<AlbumPage />} />
       </Routes>
     </>
   );

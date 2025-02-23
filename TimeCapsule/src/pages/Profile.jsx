@@ -4,8 +4,8 @@ import { doc, getDoc } from "firebase/firestore"; // For fetching received media
 import { useFirebase } from "../context/firebase";
 import AddContentModal from "../components/AddContentModal";
 
-// CardMenu component (unchanged)
-const CardMenu = ({ id, type, onEdit, onDelete }) => {
+// CardMenu component (unchanged except for added onShare prop)
+const CardMenu = ({ id, type, onEdit, onDelete, onShare }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -24,6 +24,12 @@ const CardMenu = ({ id, type, onEdit, onDelete }) => {
     e.stopPropagation();
     setMenuOpen(false);
     onDelete(id, type);
+  };
+
+  const handleShare = (e) => {
+    e.stopPropagation();
+    setMenuOpen(false);
+    if (onShare) onShare(id, type);
   };
 
   useEffect(() => {
@@ -65,6 +71,16 @@ const CardMenu = ({ id, type, onEdit, onDelete }) => {
                 Delete
               </button>
             </li>
+            {type === "album" && onShare && (
+              <li>
+                <button
+                  onClick={handleShare}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Share
+                </button>
+              </li>
+            )}
           </ul>
         </div>
       )}
@@ -85,6 +101,7 @@ const Profile = () => {
     deleteAlbum,
     acceptReceivedContent,
     rejectReceivedContent,
+    shareAlbum, // For sharing albums (used in CardMenu)
   } = useFirebase();
 
   const [capsules, setCapsules] = useState([]); // Personal capsules
@@ -100,6 +117,9 @@ const Profile = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(""); // "capsule" or "album"
+
+  // State for tracking flipped capsules (to show locked state)
+  const [flippedCapsules, setFlippedCapsules] = useState({});
 
   // Fetch personal media details from "userMedia" document
   const fetchUserMediaDetails = async () => {
@@ -162,6 +182,19 @@ const Profile = () => {
   useEffect(() => {
     fetchReceivedMediaDetails();
   }, [user]);
+
+  // Handler for capsule click – if locked, flip card; otherwise, navigate.
+  const handleCapsuleClick = (capsule) => {
+    const now = new Date();
+    if (capsule.lockUntil && new Date(capsule.lockUntil) > now) {
+      setFlippedCapsules((prev) => ({ ...prev, [capsule.id]: true }));
+      setTimeout(() => {
+        setFlippedCapsules((prev) => ({ ...prev, [capsule.id]: false }));
+      }, 3000);
+    } else {
+      navigate(`/profile/capsule/${capsule.id}`);
+    }
+  };
 
   const handleOpenModal = (type) => {
     setModalType(type);
@@ -232,6 +265,33 @@ const Profile = () => {
     }
   };
 
+  // Share handler for albums (for CardMenu)
+  const handleShareContent = (id, type) => {
+    if (type === "album") {
+      setShareAlbumId(id);
+      setShareModalOpen(true);
+    }
+  };
+
+  // State for share modal
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareAlbumId, setShareAlbumId] = useState(null);
+  const [shareEmail, setShareEmail] = useState("");
+
+  const handleShareSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await shareAlbum(shareAlbumId, shareEmail);
+      alert("Album shared successfully!");
+    } catch (error) {
+      console.error("Error sharing album:", error);
+      alert(error.message);
+    }
+    setShareModalOpen(false);
+    setShareAlbumId(null);
+    setShareEmail("");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 relative">
       <div className={modalOpen ? "filter blur-sm" : ""}>
@@ -263,7 +323,7 @@ const Profile = () => {
                 {capsules.map((capsule) => (
                   <div
                     key={capsule.id}
-                    onClick={() => navigate(`/profile/capsule/${capsule.id}`)}
+                    onClick={() => handleCapsuleClick(capsule)}
                     className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
                   >
                     <CardMenu
@@ -272,9 +332,15 @@ const Profile = () => {
                       onEdit={handleEditContent}
                       onDelete={handleDeleteContent}
                     />
-                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
-                      {capsule.name}
-                    </h3>
+                    {flippedCapsules[capsule.id] ? (
+                      <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                        Capsule is locked
+                      </h3>
+                    ) : (
+                      <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                        {capsule.name}
+                      </h3>
+                    )}
                   </div>
                 ))}
               </div>
@@ -307,6 +373,7 @@ const Profile = () => {
                       type="album"
                       onEdit={handleEditContent}
                       onDelete={handleDeleteContent}
+                      onShare={handleShareContent}
                     />
                     <h3 className="text-lg font-semibold text-[#036c5f] text-center">
                       {album.name}
@@ -329,12 +396,18 @@ const Profile = () => {
                 {receivedCapsules.map((capsule) => (
                   <div
                     key={capsule.id}
-                    onClick={() => navigate(`/profile/capsule/${capsule.id}`)}
+                    onClick={() => handleCapsuleClick(capsule)}
                     className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
                   >
-                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
-                      {capsule.name}
-                    </h3>
+                    {flippedCapsules[capsule.id] ? (
+                      <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                        Capsule is locked
+                      </h3>
+                    ) : (
+                      <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                        {capsule.name}
+                      </h3>
+                    )}
                     <div className="absolute bottom-2 right-2 space-x-1">
                       <button
                         onClick={(e) => {
@@ -373,12 +446,18 @@ const Profile = () => {
                 {acceptedCapsules.map((capsule) => (
                   <div
                     key={capsule.id}
-                    onClick={() => navigate(`/profile/capsule/${capsule.id}`)}
+                    onClick={() => handleCapsuleClick(capsule)}
                     className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
                   >
-                    <h3 className="text-lg font-semibold text-[#036c5f] text-center">
-                      {capsule.name}
-                    </h3>
+                    {flippedCapsules[capsule.id] ? (
+                      <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                        Capsule is locked
+                      </h3>
+                    ) : (
+                      <h3 className="text-lg font-semibold text-[#036c5f] text-center">
+                        {capsule.name}
+                      </h3>
+                    )}
                   </div>
                 ))}
               </div>
@@ -471,6 +550,49 @@ const Profile = () => {
           onClose={handleCloseModal}
           onSubmit={handleSubmitContent}
         />
+      )}
+
+      {/* Share Album Modal */}
+      {shareModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+          onClick={() => setShareModalOpen(false)}
+        >
+          <div className="bg-white p-6 rounded-lg relative" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-bold mb-4">Share Album</h2>
+            <form onSubmit={handleShareSubmit}>
+              <label className="block text-gray-700 mb-2">Recipient Email:</label>
+              <input
+                type="email"
+                value={shareEmail}
+                onChange={(e) => setShareEmail(e.target.value)}
+                required
+                className="w-full px-4 py-2 mb-4 border rounded"
+              />
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setShareModalOpen(false)}
+                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors"
+                >
+                  Share
+                </button>
+              </div>
+            </form>
+            <button
+              onClick={() => setShareModalOpen(false)}
+              className="absolute top-2 right-2 text-gray-600 text-2xl"
+            >
+              &times;
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -436,6 +436,27 @@ export const FirebaseProvider = (props) => {
     }
     return { capsules: [], acceptedCapsules: [], albums: [], acceptedAlbums: [] };
   };
+  // New function: Get user details by user ID
+const getUserById = async (userId) => {
+  if (!userId) {
+    console.error("No user ID provided.");
+    return null;
+  }
+  try {
+    const userRef = doc(firestore, "users", userId);
+    const userSnap = await getDoc(userRef);
+    if (userSnap.exists()) {
+      return { id: userSnap.id, ...userSnap.data() };
+    } else {
+      console.error(`No user found with ID: ${userId}`);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching user by ID:", error);
+    return null;
+  }
+};
+
 
   return (
     <FirebaseContext.Provider
@@ -461,6 +482,7 @@ export const FirebaseProvider = (props) => {
         updateReceivedUserMedia,
         rejectReceivedContent,
         getReceivedMedia,
+        getUserById,
       }}
     >
       {props.children}
