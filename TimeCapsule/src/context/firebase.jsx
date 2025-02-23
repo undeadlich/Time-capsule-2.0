@@ -201,7 +201,7 @@ export const FirebaseProvider = (props) => {
       const data = await response.json();
       console.log("Analysis Results:", data);
       const sfwFileURLs = fileURLs.filter(url => 
-        data.results.some(result => result.image_url === url && result.classification === "SFW")
+        data.results.some(result => result.image_url === url && result.classification !== "NSFW")
       );
     
     
