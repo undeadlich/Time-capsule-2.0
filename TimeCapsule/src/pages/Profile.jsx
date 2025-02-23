@@ -780,6 +780,18 @@ const Profile = () => {
             </div>
           </section>
         </main>
+        
+        {/* footer */}
+        <footer className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] py-6">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-stone-300">
+              &copy; {new Date().getFullYear()} Time Capsule 2.0. All rights reserved.
+            </p>
+            <p className="text-stone-300 text-sm mt-2">
+              Designed by Team GPAY from IIT Mandi
+            </p>
+          </div>
+        </footer>
       </div>
 
       {modalOpen && (

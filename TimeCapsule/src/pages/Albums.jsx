@@ -1,56 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useFirebase } from "../context/firebase";
-
-const MediaCardMenu = ({ onDelete }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    setMenuOpen(!menuOpen);
-  };
-
-  const handleDelete = (e) => {
-    e.stopPropagation();
-    setMenuOpen(false);
-    onDelete();
-  };
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
-
-  return (
-    <div ref={menuRef} className="absolute top-1 right-1" onClick={(e) => e.stopPropagation()}>
-      <button onClick={toggleMenu} className="p-1 rounded-full hover:bg-gray-200">
-        <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-          <circle cx="10" cy="4" r="1.5" />
-          <circle cx="10" cy="10" r="1.5" />
-          <circle cx="10" cy="16" r="1.5" />
-        </svg>
-      </button>
-      {menuOpen && (
-        <div className="absolute right-0 mt-1 w-24 bg-white border border-gray-200 rounded shadow-lg z-10">
-          <button
-            onClick={handleDelete}
-            className="block w-full text-left px-3 py-1 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            Delete
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const AlbumPage = () => {
   const { albumId } = useParams();
@@ -62,9 +12,7 @@ const AlbumPage = () => {
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(null);
 
   // Helper function to check if a URL points to an image
-  const isImage = (url) => {
-    return url.match(/\.(jpeg|jpg|gif|png)$/i) !== null;
-  };
+  const isImage = (url) => url.match(/\.(jpeg|jpg|gif|png)$/i) !== null;
 
   const fetchAlbumData = async () => {
     if (albumId) {
@@ -80,7 +28,7 @@ const AlbumPage = () => {
 
   useEffect(() => {
     fetchAlbumData();
-  }, [albumId, getAlbumById]);
+  }, [albumId]);
 
   // Fetch creator details
   useEffect(() => {
@@ -95,7 +43,7 @@ const AlbumPage = () => {
       }
     };
     fetchCreator();
-  }, [album, getUserById]);
+  }, [album]);
 
   // Handler for file input change to add new photos/videos
   const handlePhotoChange = async (e) => {
@@ -123,7 +71,9 @@ const AlbumPage = () => {
             {album ? album.name : "Album"}
           </h1>
           <div className="flex space-x-4">
-            <Link to="/" className="text-stone-300 hover:underline">Home</Link>
+            <Link to="/" className="text-stone-300 hover:underline">
+              Home
+            </Link>
             <button
               onClick={() => navigate(-1)}
               className="text-stone-300 hover:underline"
@@ -146,7 +96,9 @@ const AlbumPage = () => {
           </p>
           <p className="text-gray-800">
             <span className="font-semibold">Created by:</span>{" "}
-            {creator ? `${creator.firstName} ${creator.lastName} (${creator.email})` : album?.createdBy}
+            {creator
+              ? `${creator.firstName} ${creator.lastName} (${creator.email})`
+              : album?.createdBy}
           </p>
         </section>
 
@@ -178,7 +130,7 @@ const AlbumPage = () => {
               {mediaItems.map((url, index) => (
                 <div 
                   key={index} 
-                  className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-all"
+                  className="bg-white p-2 rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-all"
                   onClick={() => setSelectedMediaIndex(index)}
                 >
                   {isImage(url) ? (
@@ -194,7 +146,6 @@ const AlbumPage = () => {
                       className="w-full object-cover rounded aspect-[3/2]"
                     ></video>
                   )}
-                  <MediaCardMenu onDelete={() => handleDeleteMedia(url)} />
                 </div>
               ))}
             </div>
@@ -205,7 +156,7 @@ const AlbumPage = () => {
       {/* Enlarged Media Modal with blurred background */}
       {selectedMediaIndex !== null && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white bg-opacity-30 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md"
           onClick={() => setSelectedMediaIndex(null)}
         >
           <div className="relative" onClick={(e) => e.stopPropagation()}>
@@ -219,7 +170,7 @@ const AlbumPage = () => {
               <img 
                 src={mediaItems[selectedMediaIndex]} 
                 alt={`Media ${selectedMediaIndex}`} 
-                className="max-w-full max-h-screen" 
+                className="max-w-full max-h-screen"
               />
             ) : (
               <video 
