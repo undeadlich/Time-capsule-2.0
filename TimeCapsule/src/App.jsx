@@ -5,6 +5,7 @@ import HomePage from './pages/Home.jsx';
 import Profile from './pages/Profile.jsx';
 import AlbumPage from './pages/Albums.jsx';
 import CapsulePage from './pages/Capsules.jsx';
+import SearchImage from './pages/SearchImage.jsx';
 function App() {
   return (
     <>
@@ -16,6 +17,7 @@ function App() {
         <Route path='/profile/album/:albumId' element={<AlbumPage />} />
         <Route path='/profile/capsule/:capsuleId' element={<CapsulePage />} />
         <Route path='/album/:albumId' element={<AlbumPage />} />
+        <Route path='/search' element={<SearchImage />} />
       </Routes>
     </>
   );
