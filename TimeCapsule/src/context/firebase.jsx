@@ -21,6 +21,9 @@ import {
   query,
   where,
   arrayUnion,
+  deleteDoc, 
+  updateDoc, 
+  arrayRemove,
 } from "firebase/firestore";
 
 const FirebaseContext = createContext(null);
@@ -215,8 +218,94 @@ export const FirebaseProvider = (props) => {
     }
   };
 
+  // New function: Get capsule details by its ID
+  const getCapsuleById = async (capsuleId) => {
+    try {
+      const capsuleDoc = await getDoc(doc(firestore, "capsules", capsuleId));
+      if (capsuleDoc.exists()) {
+        return { id: capsuleDoc.id, ...capsuleDoc.data() };
+      } else {
+        console.error(`No capsule found with ID: ${capsuleId}`);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching capsule by ID:", error);
+      return null;
+    }
+  };
+
+  // New function: Get album details by its ID
+  const getAlbumById = async (albumId) => {
+    try {
+      const albumDoc = await getDoc(doc(firestore, "albums", albumId));
+      if (albumDoc.exists()) {
+        return { id: albumDoc.id, ...albumDoc.data() };
+      } else {
+        console.error(`No album found with ID: ${albumId}`);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching album by ID:", error);
+      return null;
+    }
+  };
+
+
+  const deleteCapsule = async (userId, capsuleId) => {
+    try {
+      // Delete the capsule document from the "capsules" collection
+      await deleteDoc(doc(firestore, "capsules", capsuleId));
+      // Remove the capsule ID from the user's media array
+      const userMediaRef = doc(firestore, "userMedia", userId);
+      await updateDoc(userMediaRef, {
+        capsules: arrayRemove(capsuleId),
+      });
+      console.log(`Capsule ${capsuleId} deleted successfully.`);
+      return true;
+    } catch (error) {
+      console.error("Error deleting capsule:", error);
+      return false;
+    }
+  };
+  
+  const deleteAlbum = async (userId, albumId) => {
+    try {
+      // Delete the album document from the "albums" collection
+      await deleteDoc(doc(firestore, "albums", albumId));
+      // Remove the album ID from the user's media array
+      const userMediaRef = doc(firestore, "userMedia", userId);
+      await updateDoc(userMediaRef, {
+        albums: arrayRemove(albumId),
+      });
+      console.log(`Album ${albumId} deleted successfully.`);
+      return true;
+    } catch (error) {
+      console.error("Error deleting album:", error);
+      return false;
+    }
+  };
+  
+
   return (
-    <FirebaseContext.Provider value={{ signinWithGoogle, signupUserWithEmailAndPassword, singinUserWithEmailAndPass, isLoggedIn, user, addUser, logout, addContent, addUserMedia: ensureUserMedia, getUserMedia }}>
+    <FirebaseContext.Provider
+      value={{
+        signinWithGoogle,
+        signupUserWithEmailAndPassword,
+        singinUserWithEmailAndPass,
+        isLoggedIn,
+        user,
+        addUser,
+        logout,
+        addContent,
+        addUserMedia: ensureUserMedia,
+        getUserMedia,
+        getCapsuleById,
+        getAlbumById,
+        deleteCapsule,
+        deleteAlbum,
+
+      }}
+    >
       {props.children}
     </FirebaseContext.Provider>
   );

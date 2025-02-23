@@ -73,27 +73,35 @@ const CardMenu = ({ id, type, onEdit, onDelete }) => {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user, getUserMedia, addContent } = useFirebase();
+  const { user, getUserMedia, getCapsuleById, getAlbumById, addContent,deleteAlbum,deleteCapsule } = useFirebase();
   const [capsules, setCapsules] = useState([]);
   const [albums, setAlbums] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState(""); // "capsule" or "album"
 
   // Fetch user media (capsules and albums)
-  const fetchUserMedia = async () => {
+  const fetchUserMediaDetails = async () => {
     if (user?.uid) {
       try {
         const userMedia = await getUserMedia(user.uid);
-        setCapsules(userMedia.capsules || []);
-        setAlbums(userMedia.albums || []);
+        const capsuleIds = userMedia.capsules || [];
+        const albumIds = userMedia.albums || [];
+        
+        const capsulePromises = capsuleIds.map((id) => getCapsuleById(id));
+        const capsuleDetails = await Promise.all(capsulePromises);
+        setCapsules(capsuleDetails.filter((item) => item !== null));
+        
+        const albumPromises = albumIds.map((id) => getAlbumById(id));
+        const albumDetails = await Promise.all(albumPromises);
+        setAlbums(albumDetails.filter((item) => item !== null));
       } catch (error) {
-        console.error("Error fetching profile data:", error);
+        console.error("Error fetching user media details:", error);
       }
     }
   };
 
   useEffect(() => {
-    fetchUserMedia();
+    fetchUserMediaDetails();
   }, [user]);
 
   const handleOpenModal = (type) => {
@@ -103,14 +111,14 @@ const Profile = () => {
 
   const handleCloseModal = async () => {
     setModalOpen(false);
-    await fetchUserMedia(); // Refresh data after modal closes
+    await fetchUserMediaDetails(); // Refresh data after modal closes
   };
 
   const handleSubmitContent = async (data) => {
     try {
       const contentId = await addContent(data);
       if (!contentId) throw new Error("Failed to add content.");
-      await fetchUserMedia();
+      await fetchUserMediaDetails();
     } catch (error) {
       console.error("Error adding content:", error);
       alert(error.message);
@@ -125,9 +133,15 @@ const Profile = () => {
 
   const handleDeleteContent = async (id, type) => {
     try {
-      alert(`Delete ${type} ${id}`);
-      // Replace with your delete functionality, e.g., await deleteContent(id);
-      await fetchUserMedia();
+      // Optional: ask for confirmation before deletion
+      if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
+
+      if (type === "capsule") {
+        await deleteCapsule(user.uid, id);
+      } else if (type === "album") {
+        await deleteAlbum(user.uid, id);
+      }
+      await fetchUserMediaDetails();
     } catch (error) {
       console.error("Error deleting content:", error);
       alert(error.message);
@@ -169,18 +183,18 @@ const Profile = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
                 {capsules.map((capsule) => (
                   <div
-                    key={capsule}
-                    onClick={() => navigate(`/${user.uid}/capsule/${capsule}`)}
+                    key={capsule.id}
+                    onClick={() => navigate(`/profile/capsule/${capsule.id}`)}
                     className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
                   >
                     <CardMenu
-                      id={capsule}
+                      id={capsule.id}
                       type="capsule"
                       onEdit={handleEditContent}
                       onDelete={handleDeleteContent}
                     />
                     <h3 className="text-lg font-semibold text-[#036c5f] text-center">
-                      Capsule {capsule}
+                      {capsule.name}
                     </h3>
                   </div>
                 ))}
@@ -207,18 +221,18 @@ const Profile = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
                 {albums.map((album) => (
                   <div
-                    key={album}
-                    onClick={() => navigate(`/${user.uid}/album/${album}`)}
+                    key={album.id}
+                    onClick={() => navigate(`/profile/album/${album.id}`)}
                     className="relative bg-white rounded-lg shadow-lg border border-gray-200 cursor-pointer hover:bg-stone-200 hover:scale-105 hover:shadow-xl transition-all w-full aspect-[3/2] flex items-center justify-center"
                   >
                     <CardMenu
-                      id={album}
+                      id={album.id}
                       type="album"
                       onEdit={handleEditContent}
                       onDelete={handleDeleteContent}
                     />
                     <h3 className="text-lg font-semibold text-[#036c5f] text-center">
-                      Album {album}
+                       {album.name}
                     </h3>
                   </div>
                 ))}

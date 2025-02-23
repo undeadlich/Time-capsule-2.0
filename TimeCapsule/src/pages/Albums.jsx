@@ -3,19 +3,27 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useFirebase } from "../context/firebase";
 
 const AlbumPage = () => {
-  const { userId, albumId } = useParams();
+  const { albumId } = useParams();
   const navigate = useNavigate();
-  const { getAlbum } = useFirebase();
+  const { getAlbumById } = useFirebase();
   const [album, setAlbum] = useState(null);
   const [mediaItems, setMediaItems] = useState([]);
 
+  // Helper function to check if a URL points to an image
+  const isImage = (url) => {
+    return url.match(/\.(jpeg|jpg|gif|png)$/i) !== null;
+  };
+
   useEffect(() => {
     const fetchAlbumData = async () => {
-      if (userId && albumId) {
+      if (albumId) {
+        console.log("Fetching album data for album ID:", albumId);
         try {
-          const albumData = await getAlbum(userId, albumId);
+          const albumData = await getAlbumById(albumId);
           setAlbum(albumData);
-          setMediaItems(albumData.media || []);
+          console.log("Album data:", albumData);
+          // Assuming albumData.files is an array of URL strings
+          setMediaItems(albumData.files || []);
         } catch (error) {
           console.error("Error fetching album data:", error);
         }
@@ -23,7 +31,7 @@ const AlbumPage = () => {
     };
 
     fetchAlbumData();
-  }, [userId, albumId, getAlbum]);
+  }, [albumId, getAlbumById]);
 
   if (!album) {
     return (
@@ -38,7 +46,7 @@ const AlbumPage = () => {
       {/* Header */}
       <header className="bg-gradient-to-r from-[#048c7f] to-[#036c5f] p-6">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-stone-300">{album.title}</h1>
+          <h1 className="text-2xl font-bold text-stone-300">{album.name}</h1>
           <div className="flex space-x-4">
             <Link to="/" className="text-stone-300 hover:underline">
               Home
@@ -58,10 +66,10 @@ const AlbumPage = () => {
         <section className="mb-8">
           <h2 className="text-xl font-bold text-[#036c5f] mb-4">Album Details</h2>
           <p className="text-gray-800 mb-2">
-            <span className="font-semibold">Description:</span> {album.description}
+            <span className="font-semibold">Description:</span> {album.note}
           </p>
           <p className="text-gray-800">
-            <span className="font-semibold">Privacy:</span> {album.privacy}
+            <span className="font-semibold">Privacy:</span> {album.albumType}
           </p>
         </section>
 
@@ -71,17 +79,17 @@ const AlbumPage = () => {
             <p className="text-gray-700">No media available in this album.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {mediaItems.map((item, index) => (
+              {mediaItems.map((url, index) => (
                 <div key={index} className="bg-white p-4 rounded-lg shadow-lg border border-gray-200">
-                  {item.type === "image" ? (
+                  {isImage(url) ? (
                     <img
-                      src={item.url}
+                      src={url}
                       alt={`Media ${index}`}
                       className="w-full h-40 object-cover rounded"
                     />
                   ) : (
                     <video
-                      src={item.url}
+                      src={url}
                       controls
                       className="w-full h-40 object-cover rounded"
                     ></video>
