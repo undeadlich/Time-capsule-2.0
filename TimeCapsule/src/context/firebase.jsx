@@ -189,11 +189,27 @@ export const FirebaseProvider = (props) => {
       const url = await uploadToCloudinary(file);
       if (url) fileURLs.push(url);
     }
+   
+     const response = await fetch("http://127.0.0.1:5000/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ image_urls: fileURLs })
+      });
+  
+      const data = await response.json();
+      console.log("Analysis Results:", data);
+      const sfwFileURLs = fileURLs.filter(url => 
+        data.results.some(result => result.image_url === url && result.classification === "SFW")
+      );
+    
+    
 
     const dataToStore = {
       name,
       note,
-      files: fileURLs,
+      files: sfwFileURLs,
       createdBy: user?.uid,
       createdAt: new Date(),
     };
@@ -209,6 +225,7 @@ export const FirebaseProvider = (props) => {
     }
 
     try {
+      
       const docRef = await addDoc(collection(firestore, collectionName), dataToStore);
       const contentId = docRef.id;
       await updateUserMedia(user?.uid, contentId, type);
@@ -341,8 +358,32 @@ export const FirebaseProvider = (props) => {
   // New function: Add a photo to an album
   const addPhotoToAlbum = async (albumId, file) => {
     try {
+      
       const photoUrl = await uploadToCloudinary(file);
       if (!photoUrl) throw new Error("Photo upload failed");
+      console.log("Photo uploaded successfully:", photoUrl);
+      const photoUrlString = String(photoUrl);
+      const photoArray = [photoUrlString];
+      console.log(photoArray);
+      try {
+        const response = await fetch("http://127.0.0.1:5000/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ image_urls: photoArray })
+        });
+    
+        const data = await response.json();
+        console.log("Analysis Results:", data);
+        const isNSFW = data.results.some(result => result.classification === "NSFW");
+        if (isNSFW) {
+          console.warn("Photo is NSFW. Not adding to album.");
+          return null;
+        }
+      } catch (error) {
+        console.error("Error analyzing media:", error);
+      }
       const albumRef = doc(firestore, "albums", albumId);
       await updateDoc(albumRef, {
         files: arrayUnion(photoUrl),

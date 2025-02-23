@@ -17,31 +17,9 @@ const CapsulePage = () => {
   const fetchCapsuleData = async () => {
     if (capsuleId) {
       try {
-        const data1 = await getCapsuleById(capsuleId);
-        setCapsule(data1);
-        setMediaItems(data1.files || []);
-        try {
-          const response = await fetch("http://127.0.0.1:5000/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ image_urls: data1.files })
-          });
-      
-          const data = await response.json();
-          console.log("Analysis Results:", data);
-          if (data.results) {
-          
-            const safeMediaItems = data.results
-              .filter(item => item.classification === "SFW")
-              .map(item => item.image_url); 
-  
-            setMediaItems(safeMediaItems||[]);
-          }
-        } catch (error) {
-          console.error("Error analyzing images:", error);
-        }
+        const data = await getCapsuleById(capsuleId);
+        setCapsule(data);
+        setMediaItems(data.files || []);
       } catch (error) {
         console.error("Error fetching capsule data:", error);
       }
