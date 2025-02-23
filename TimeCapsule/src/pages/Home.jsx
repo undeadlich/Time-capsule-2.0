@@ -295,9 +295,7 @@ const HomePage = () => {
                                 <p className="text-white text-center text-lg font-semibold">
                                   {album.name}
                                 </p>
-                                <p className="text-white text-center text-sm">
-                                  {album.community}
-                                </p>
+
                               </div>
                             </div>
                           </Link>
@@ -330,9 +328,6 @@ const HomePage = () => {
                                 <div className="absolute bottom-0 left-0 w-full bg-teal-600 bg-opacity-80 p-2">
                                   <p className="text-white text-center text-lg font-semibold">
                                     {album.name}
-                                  </p>
-                                  <p className="text-white text-center text-sm">
-                                    {album.community}
                                   </p>
                                 </div>
                               </div>
