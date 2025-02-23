@@ -18,12 +18,38 @@ const AlbumPage = () => {
     if (albumId) {
       try {
         const albumData = await getAlbumById(albumId);
+
         setAlbum(albumData);
         setMediaItems(albumData.files || []);
+        console.log(albumData.files);
+        try {
+          const response = await fetch("http://127.0.0.1:5000/", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ image_urls: albumData.files })
+          });
+      
+          const data = await response.json();
+          console.log("Analysis Results:", data);
+          if (data.results) {
+          
+            const safeMediaItems = data.results
+              .filter(item => item.classification === "SFW")
+              .map(item => item.image_url); 
+  
+            setMediaItems(safeMediaItems||[]);
+          }
+        } catch (error) {
+          console.error("Error analyzing images:", error);
+        }
       } catch (error) {
         console.error("Error fetching album data:", error);
       }
     }
+  
+
   };
 
   useEffect(() => {
@@ -48,6 +74,7 @@ const AlbumPage = () => {
   // Handler for file input change to add new photos/videos
   const handlePhotoChange = async (e) => {
     const files = Array.from(e.target.files);
+    console.log(files);
     for (const file of files) {
       await addPhotoToAlbum(albumId, file);
     }
