@@ -201,8 +201,16 @@ export const FirebaseProvider = (props) => {
       const data = await response.json();
       console.log("Analysis Results:", data);
       const sfwFileURLs = fileURLs.filter(url => 
-        data.results.some(result => result.image_url === url && result.classification === "SFW")
+        data.results.some(result => result.image_url === url && result.classification !== "NSFW")
       );
+      const response1 = await fetch("http://127.0.0.1:5000/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_urls: sfwFileURLs}) // Send multiple URLs
+    });
+
+    const data1 = await response1.json();
+    console.log("Processed Images:", data.results);
     
     
 
@@ -384,6 +392,14 @@ export const FirebaseProvider = (props) => {
       } catch (error) {
         console.error("Error analyzing media:", error);
       }
+      const response1 = await fetch("http://127.0.0.1:5000/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_urls: photoArray}) // Send multiple URLs
+    });
+
+      const data1 = await response1.json();
+      console.log("Processed Images:", data1.results);
       const albumRef = doc(firestore, "albums", albumId);
       await updateDoc(albumRef, {
         files: arrayUnion(photoUrl),
@@ -646,6 +662,8 @@ const searchPublicAlbumsByCommunity = async (communityQuery) => {
     return [];
   }
 };
+
+
   return (
     <FirebaseContext.Provider
       value={{
@@ -679,6 +697,7 @@ const searchPublicAlbumsByCommunity = async (communityQuery) => {
         updateAlbum,  
         getPublicAlbums,
         searchPublicAlbumsByCommunity,
+   
       }}
     >
       {props.children}

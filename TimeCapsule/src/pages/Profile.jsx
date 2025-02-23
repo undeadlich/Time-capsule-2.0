@@ -123,6 +123,12 @@ const Header = () => {
                     Logout
                   </button>
                 </li>
+                <li>
+                  <Link to="/search" className="block px-4 py-2 text-gray-700 hover:bg-gray-100" onClick={() => setDropdownOpen(false)}>
+                    Search
+                  </Link>
+                </li>
+                
               </ul>
             </div>
           )}
@@ -593,15 +599,7 @@ const Profile = () => {
     <div className="min-h-screen bg-gray-50 relative">
       <div className={modalOpen ? "filter blur-sm" : ""}>
         <Header />
-        <section className="py-4">
-          <div className="container mx-auto px-4 text-center">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="w-full max-w-md px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#036c5f]"
-            />
-          </div>
-        </section>
+        
         <main className="container mx-auto p-6">
           {/* Personal Capsules Section */}
           <section className="mb-8">
