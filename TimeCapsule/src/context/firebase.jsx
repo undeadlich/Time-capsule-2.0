@@ -29,12 +29,12 @@ import {
 const FirebaseContext = createContext(null);
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB4dJU_pMvB79Jy7SDTlik3GC_wmyUGy8I",
-  authDomain: "timecapsule-5ce63.firebaseapp.com",
-  projectId: "timecapsule-5ce63",
-  storageBucket: "timecapsule-5ce63.appspot.com",
-  messagingSenderId: "1001064662306",
-  appId: "1:1001064662306:web:2af6174250a8ecc280917b",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 export const useFirebase = () => useContext(FirebaseContext);
@@ -46,8 +46,8 @@ const firestore = getFirestore(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 
 // Cloudinary Details
-const CLOUDINARY_CLOUD_NAME = "dahbv7vtu";
-const CLOUDINARY_UPLOAD_PRESET = "TimeCapsule";
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
 export const FirebaseProvider = (props) => {
   const [user, setUser] = useState(null);
