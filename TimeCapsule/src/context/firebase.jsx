@@ -378,7 +378,7 @@ export const FirebaseProvider = (props) => {
         console.log("Analysis Results:", data);
         const isNSFW = data.results.some(result => result.classification === "NSFW");
         if (isNSFW) {
-          console.warn("Photo is NSFW. Not adding to album.");
+          alert("NSFW Media detected. Unable to add to album.");
           return null;
         }
       } catch (error) {
