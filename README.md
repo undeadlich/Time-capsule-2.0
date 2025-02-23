@@ -80,12 +80,15 @@ src/
 - **Styling**: Tailwind CSS
 - **Form Handling**: React Hook Form
 - **API Integration**: Axios
+- **Storage**: Cloudinary
+- **DataBase**: Firestore
 
 ### AI Services
 
 #### 📷 NSFW Filter (NSFW-FILTER/)
 ```python
 # Key Components in app.py
+- Open source model opennsfw2
 - Image preprocessing
 - Model inference
 - Content classification
