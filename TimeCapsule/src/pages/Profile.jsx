@@ -140,6 +140,7 @@ const EditCapsuleModal = ({ capsule, onClose, onSubmit }) => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef(null);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -149,25 +150,38 @@ const EditCapsuleModal = ({ capsule, onClose, onSubmit }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       await onSubmit({ id: capsule.id, name, lockUntil });
+      toast.success("Capsule updated successfully!");
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-      <div ref={modalRef} className="bg-stone-100 rounded-lg p-6 w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f]">
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 text-lg">&times;</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-md">
+      <div
+        ref={modalRef}
+        className="bg-stone-100 rounded-lg p-6 w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f]"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 text-lg"
+        >
+          &times;
+        </button>
         <h2 className="text-2xl font-bold mb-4 text-[#036c5f]">Edit Capsule</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1 font-medium">Capsule Title</label>
+            <label className="block text-[#036c5f] mb-1 font-medium">
+              Capsule Title
+            </label>
             <input
               type="text"
               value={name}
@@ -177,7 +191,9 @@ const EditCapsuleModal = ({ capsule, onClose, onSubmit }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1 font-medium">Unlock Date & Time</label>
+            <label className="block text-[#036c5f] mb-1 font-medium">
+              Unlock Date & Time
+            </label>
             <input
               type="datetime-local"
               value={lockUntil}
@@ -188,10 +204,19 @@ const EditCapsuleModal = ({ capsule, onClose, onSubmit }) => {
             />
           </div>
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-6 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors" disabled={isSubmitting}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="bg-[#048c7f] text-white px-6 py-2 rounded-lg hover:bg-[#036c5f] transition-colors disabled:opacity-50" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="bg-[#048c7f] text-white px-6 py-2 rounded-lg hover:bg-[#036c5f] transition-colors disabled:opacity-50"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
@@ -200,7 +225,6 @@ const EditCapsuleModal = ({ capsule, onClose, onSubmit }) => {
     </div>
   );
 };
-
 // Inline EditAlbumModal for editing album fields
 const EditAlbumModal = ({ album, onClose, onSubmit }) => {
   const [name, setName] = useState(album.name || "");
@@ -208,6 +232,7 @@ const EditAlbumModal = ({ album, onClose, onSubmit }) => {
   const [albumType, setAlbumType] = useState(album.albumType || "public");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef(null);
+
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -217,6 +242,7 @@ const EditAlbumModal = ({ album, onClose, onSubmit }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -228,14 +254,25 @@ const EditAlbumModal = ({ album, onClose, onSubmit }) => {
       setIsSubmitting(false);
     }
   };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-      <div ref={modalRef} className="bg-stone-100 rounded-lg p-6 w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f]">
-        <button onClick={onClose} className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 text-lg">&times;</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-md">
+      <div
+        ref={modalRef}
+        className="bg-stone-100 rounded-lg p-6 w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f]"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-600 hover:text-gray-800 text-lg"
+        >
+          &times;
+        </button>
         <h2 className="text-2xl font-bold mb-4 text-[#036c5f]">Edit Album</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1 font-medium">Album Title</label>
+            <label className="block text-[#036c5f] mb-1 font-medium">
+              Album Title
+            </label>
             <input
               type="text"
               value={name}
@@ -245,7 +282,9 @@ const EditAlbumModal = ({ album, onClose, onSubmit }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1 font-medium">Community</label>
+            <label className="block text-[#036c5f] mb-1 font-medium">
+              Community
+            </label>
             <input
               type="text"
               value={community}
@@ -255,7 +294,9 @@ const EditAlbumModal = ({ album, onClose, onSubmit }) => {
             />
           </div>
           <div className="mb-4">
-            <label className="block text-[#036c5f] mb-1 font-medium">Privacy</label>
+            <label className="block text-[#036c5f] mb-1 font-medium">
+              Privacy
+            </label>
             <select
               value={albumType}
               onChange={(e) => setAlbumType(e.target.value)}
@@ -266,10 +307,19 @@ const EditAlbumModal = ({ album, onClose, onSubmit }) => {
             </select>
           </div>
           <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="px-6 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors" disabled={isSubmitting}>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+              disabled={isSubmitting}
+            >
               Cancel
             </button>
-            <button type="submit" className="bg-[#048c7f] text-white px-6 py-2 rounded-lg hover:bg-[#036c5f] transition-colors disabled:opacity-50" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="bg-[#048c7f] text-white px-6 py-2 rounded-lg hover:bg-[#036c5f] transition-colors disabled:opacity-50"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
@@ -278,6 +328,7 @@ const EditAlbumModal = ({ album, onClose, onSubmit }) => {
     </div>
   );
 };
+
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -806,48 +857,55 @@ const Profile = () => {
         <EditAlbumModal album={editAlbum} onClose={() => setEditAlbumModalOpen(false)} onSubmit={handleEditAlbumSubmit} />
       )}
 
-      {shareModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-          onClick={() => setShareModalOpen(false)}
-        >
-          <div className="bg-white p-6 rounded-lg relative" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-xl font-bold mb-4">Share {shareType === "album" ? "Album" : "Capsule"}</h2>
-            <form onSubmit={handleShareSubmit}>
-              <label className="block text-gray-700 mb-2">Recipient Email(s):</label>
-              <input
-                type="text"
-                value={shareEmail}
-                onChange={(e) => setShareEmail(e.target.value)}
-                required
-                placeholder="email1@example.com, email2@example.com"
-                className="w-full px-4 py-2 mb-4 border rounded"
-              />
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setShareModalOpen(false)}
-                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-teal-600 text-white px-4 py-2 rounded hover:bg-teal-700 transition-colors"
-                >
-                  Share
-                </button>
-              </div>
-            </form>
-            <button
-              onClick={() => setShareModalOpen(false)}
-              className="absolute top-2 right-2 text-gray-600 text-2xl"
-            >
-              &times;
-            </button>
-          </div>
+{shareModalOpen && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-md"
+    onClick={() => setShareModalOpen(false)}
+  >
+    <div
+      className="bg-stone-100 p-6 rounded-lg relative w-full max-w-lg shadow-xl border-t-4 border-t-[#048c7f]"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h2 className="text-xl font-bold mb-4 text-[#036c5f]">
+        Share {shareType === "album" ? "Album" : "Capsule"}
+      </h2>
+      <form onSubmit={handleShareSubmit}>
+        <label className="block text-gray-700 mb-2">
+          Recipient Email(s):
+        </label>
+        <input
+          type="text"
+          value={shareEmail}
+          onChange={(e) => setShareEmail(e.target.value)}
+          required
+          placeholder="email1@example.com, email2@example.com"
+          className="w-full px-4 py-2 mb-4 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-[#036c5f]"
+        />
+        <div className="flex justify-end space-x-4">
+          <button
+            type="button"
+            onClick={() => setShareModalOpen(false)}
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            Share
+          </button>
         </div>
-      )}
+      </form>
+      <button
+        onClick={() => setShareModalOpen(false)}
+        className="absolute top-2 right-2 text-gray-600 text-2xl"
+      >
+        &times;
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 };
