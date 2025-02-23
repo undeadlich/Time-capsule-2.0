@@ -632,7 +632,7 @@ const Profile = () => {
                     />
                     <div className="absolute bottom-0 left-0 w-full bg-teal-600 bg-opacity-80 p-2">
                       {flippedCapsules[capsule.id] ? (
-                        <p className="text-white text-center text-sm">Capsule is locked</p>
+                        <p className="text-white text-center text-sm">Capsule is locked will unlock in {capsule.lockUntil}</p>
                       ) : (
                         <p className="text-white text-center text-lg font-semibold">{capsule.name}</p>
                       )}
@@ -699,7 +699,7 @@ const Profile = () => {
                   >
                     <div className="absolute bottom-0 left-0 w-full bg-teal-600 bg-opacity-80 p-2">
                       {flippedCapsules[capsule.id] ? (
-                        <p className="text-white text-center text-sm">Capsule is locked</p>
+                        <p className="text-white text-center text-sm">Capsule is locked will unlock in {capsule.lockUntil} </p>
                       ) : (
                         <p className="text-white text-center text-lg font-semibold">{capsule.name}</p>
                       )}
@@ -743,7 +743,7 @@ const Profile = () => {
                     <CardMenu id={capsule.id} type="capsule" onDelete={() => handleDeleteAcceptedCapsule(capsule.id)} />
                     <div className="absolute bottom-0 left-0 w-full bg-teal-600 bg-opacity-80 p-2">
                       {flippedCapsules[capsule.id] ? (
-                        <p className="text-white text-center text-sm">Capsule is locked</p>
+                        <p className="text-white text-center text-sm">Capsule is locked will unlock in {capsule.lockUntil}</p>
                       ) : (
                         <p className="text-white text-center text-lg font-semibold">{capsule.name}</p>
                       )}

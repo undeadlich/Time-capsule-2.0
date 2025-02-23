@@ -190,7 +190,7 @@ export const FirebaseProvider = (props) => {
       if (url) fileURLs.push(url);
     }
    
-     const response = await fetch("http://127.0.0.1:5000/", {
+     const response = await fetch("http://127.0.0.1:80/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -374,7 +374,7 @@ export const FirebaseProvider = (props) => {
       const photoArray = [photoUrlString];
       console.log(photoArray);
       try {
-        const response = await fetch("http://127.0.0.1:5000/", {
+        const response = await fetch("http://127.0.0.1:80/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
